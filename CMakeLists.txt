@@ -85,7 +85,6 @@ if(COMPILE_CLIENT)
 	if(BACKEND_SDL2)
 		# Compile SDL2 backend
 		target_compile_definitions(CuckyVoxel PRIVATE COMPILE_SDL2)
-		
 		target_sources(CuckyVoxel PRIVATE
 			"src/Client/Backend/SDL2/Core.cpp"
 			"src/Client/Backend/SDL2/Core.h"
@@ -130,6 +129,18 @@ if(COMPILE_CLIENT)
 			target_include_directories(CuckyVoxel PRIVATE ${SDL2_INCLUDE_DIRS})
 			target_link_libraries(CuckyVoxel PRIVATE ${SDL2_LIBRARIES})
 		endif()
+	endif()
+	
+	# Link OpenGL
+	if(BACKEND_SDL2)
+		# Compile OpenGL backend
+		target_compile_definitions(CuckyVoxel PRIVATE COMPILE_OPENGL)
+		target_sources(CuckyVoxel PRIVATE
+			"src/Client/Backend/OpenGL/Render.cpp"
+			"src/Client/Backend/OpenGL/Render.h"
+			"src/Client/Backend/OpenGL/Shader.cpp"
+			"src/Client/Backend/OpenGL/Shader.h"
+		)
 		
 		# Find GLEW
 		find_package(GLEW)
@@ -138,7 +149,7 @@ if(COMPILE_CLIENT)
 		endif()
 		
 		# Link GLEW
-		if(TARGET PkgConfig::sdl2)
+		if(TARGET PkgConfig::glew)
 			if(PKG_CONFIG_STATIC_LIBS)
 				# Pkg-Config static
 				message(STATUS "Using system GLEW (pkg-config, static)")
@@ -164,6 +175,14 @@ if(COMPILE_CLIENT)
 			target_include_directories(CuckyVoxel PRIVATE ${GLEW_INCLUDE_DIRS})
 			target_link_libraries(CuckyVoxel PRIVATE ${GLEW_LIBRARIES})
 		endif()
+		
+		# Find and link OpenGL
+		if (CMAKE_VERSION GREATER_EQUAL 3.11)
+			cmake_policy(SET CMP0072 NEW)
+		endif()
+		
+		find_package(OpenGL REQUIRED)
+		target_link_libraries(CuckyVoxel PRIVATE OpenGL::GL)
 	endif()
 else()
 	# Compile in server directory

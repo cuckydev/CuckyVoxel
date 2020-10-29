@@ -1,16 +1,17 @@
 #pragma once
 #include <SDL_render.h>
-#include "../Render.h"
+#include "../OpenGL/Render.h"
 
 namespace Backend
 {
 	namespace Render
 	{
-		class Render_SDL2 : public Render_Base
+		class Render_SDL2 : public Render_OpenGL
 		{
 			private:
 				//SDL window and OpenGL context
 				SDL_Window *window = nullptr;
+				SDL_GLContext gl_context = nullptr; //SDL_GLContext is a pointer type
 				
 			public:
 				//Constructors and destructor

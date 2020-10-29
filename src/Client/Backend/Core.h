@@ -20,7 +20,7 @@ namespace Backend
 				Error error;
 				
 			public:
-				//Destructor
+				//Virtual destructor
 				virtual ~Core_Base() {}
 				
 				//Interface

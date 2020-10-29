@@ -19,6 +19,7 @@ namespace Backend
 		Render_SDL2::~Render_SDL2()
 		{
 			//Delete SDL window and OpenGL context
+			SDL_GL_DeleteContext(gl_context);
 			SDL_DestroyWindow(window);
 		}
 		
@@ -26,6 +27,7 @@ namespace Backend
 		bool Render_SDL2::SetConfig(const Config config)
 		{
 			//Delete previous window
+			SDL_GL_DeleteContext(gl_context);
 			SDL_DestroyWindow(window);
 			
 			//Create new window
@@ -37,6 +39,10 @@ namespace Backend
 					config.height, //height
 					SDL_WINDOW_OPENGL | (config.resizable ? SDL_WINDOW_RESIZABLE : 0) //flags
 				)) == nullptr)
+				return error.Push(SDL_GetError());
+			
+			//Create new OpenGL context
+			if (SDL_GL_CreateContext(window) == nullptr)
 				return error.Push(SDL_GetError());
 			
 			return false;
