@@ -1,0 +1,15 @@
+# Exclude recommended CMake build directory
+build/
+
+# Exclude potential binaries
+bin_client/CuckyVoxel
+bin_client/CuckyVoxel_debug
+bin_client/CuckyVoxel.exe
+bin_client/CuckyVoxel_debug.exe
+bin_server/CuckyVoxel
+bin_server/CuckyVoxel_debug
+bin_server/CuckyVoxel.exe
+bin_server/CuckyVoxel_debug.exe
+
+# Exclude VS Code data
+.vscode/
