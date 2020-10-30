@@ -21,6 +21,8 @@ namespace Backend
 				
 				//Render interface
 				bool SetConfig(const Config config) override;
+				
+				bool EndFrame() override;
 		};
 	}
 }

@@ -81,9 +81,8 @@ if(COMPILE_CLIENT)
 		"src/Client/Backend/Render.h"
 	)
 	
-	# Compile client backend
+	# Compile SDL2 backend
 	if(BACKEND_SDL2)
-		# Compile SDL2 backend
 		target_compile_definitions(CuckyVoxel PRIVATE COMPILE_SDL2)
 		target_sources(CuckyVoxel PRIVATE
 			"src/Client/Backend/SDL2/Core.cpp"
@@ -131,13 +130,14 @@ if(COMPILE_CLIENT)
 		endif()
 	endif()
 	
-	# Link OpenGL
+	# Compile OpenGL backend
 	if(BACKEND_SDL2)
-		# Compile OpenGL backend
 		target_compile_definitions(CuckyVoxel PRIVATE COMPILE_OPENGL)
 		target_sources(CuckyVoxel PRIVATE
 			"src/Client/Backend/OpenGL/Render.cpp"
 			"src/Client/Backend/OpenGL/Render.h"
+			"src/Client/Backend/OpenGL/Mesh.cpp"
+			"src/Client/Backend/OpenGL/Mesh.h"
 			"src/Client/Backend/OpenGL/Shader.cpp"
 			"src/Client/Backend/OpenGL/Shader.h"
 		)

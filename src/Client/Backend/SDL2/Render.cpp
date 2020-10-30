@@ -1,5 +1,7 @@
 #include "Render.h"
 
+#include <GL/glew.h>
+
 namespace Backend
 {
 	namespace Render
@@ -30,6 +32,12 @@ namespace Backend
 			SDL_GL_DeleteContext(gl_context);
 			SDL_DestroyWindow(window);
 			
+			//Use OpenGL 3.3 core and set other GL attributes
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+			
 			//Create new window
 			if ((window = SDL_CreateWindow(
 					config.title.c_str(), //title
@@ -45,6 +53,21 @@ namespace Backend
 			if (SDL_GL_CreateContext(window) == nullptr)
 				return error.Push(SDL_GetError());
 			
+			//Use VSync
+			if (SDL_GL_SetSwapInterval(-1) < 0)
+				SDL_GL_SetSwapInterval(1);
+			
+			//Initialize GLEW
+			GLenum glew_error = glewInit();
+			if (glew_error != GLEW_OK)
+				return error.Push((const char*)glewGetErrorString(glew_error));
+			
+			return false;
+		}
+		
+		bool Render_SDL2::EndFrame()
+		{
+			SDL_GL_SwapWindow(window);
 			return false;
 		}
 	}
