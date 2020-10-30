@@ -15,8 +15,6 @@ namespace Backend
 				virtual ~Render_OpenGL() {}
 				
 				//Render interface
-				ShaderLanguage GetShaderLanguage() override { return ShaderLanguage_GLSL; }
-				
 				Mesh *NewMesh() override
 				{
 					return new Mesh_OpenGL();
@@ -27,9 +25,9 @@ namespace Backend
 					return new Mesh_OpenGL(vert, ind);
 				}
 				
-				Shader *NewShader(std::string vert_src, std::string frag_src) override
+				Shader *NewShader(const ShaderFile &file) override
 				{
-					return new Shader_OpenGL(vert_src, frag_src);
+					return new Shader_OpenGL(file);
 				}
 		};
 	}

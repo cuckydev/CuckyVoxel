@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <Common/Util/Error.h>
+#include "ShaderFile.h"
 
 namespace Backend
 {
@@ -15,25 +16,19 @@ namespace Backend
 			unsigned width, height;
 		};
 		
-		enum ShaderLanguage
-		{
-			ShaderLanguage_GLSL,
-			ShaderLanguage_Num,
-		};
-		
 		//Vertex types
-		const unsigned VERTEX_POS_ELEMENTS = 3;
-		const unsigned VERTEX_UV_ELEMENTS = 2;
-		const unsigned VERTEX_NORMAL_ELEMENTS = 3;
-		const unsigned VERTEX_COLOUR_ELEMENTS = 4;
-		const unsigned VERTEX_ELEMENTS = VERTEX_POS_ELEMENTS + VERTEX_UV_ELEMENTS + VERTEX_NORMAL_ELEMENTS + VERTEX_COLOUR_ELEMENTS;
+		#define VERTEX_POSITION_ELEMENTS (3)
+		#define VERTEX_UV_ELEMENTS (2)
+		#define VERTEX_NORMAL_ELEMENTS (3)
+		#define VERTEX_COLOUR_ELEMENTS (4)
+		#define VERTEX_ELEMENTS (VERTEX_POSITION_ELEMENTS + VERTEX_UV_ELEMENTS + VERTEX_NORMAL_ELEMENTS + VERTEX_COLOUR_ELEMENTS)
 		
 		struct Vertex
 		{
-			float x, y, z; //Position
-			float u, v; //Texture Coordinates
-			float nx, ny, nz; //Normal
-			float r, g, b, a; //Vertex colour
+			float position[VERTEX_POSITION_ELEMENTS];
+			float uv[VERTEX_UV_ELEMENTS];
+			float normal[VERTEX_NORMAL_ELEMENTS];
+			float colour[VERTEX_COLOUR_ELEMENTS];
 		};
 		
 		//Mesh base class
@@ -97,13 +92,12 @@ namespace Backend
 				
 				//Render interface
 				virtual bool SetConfig(const Config config) = 0;
-				virtual ShaderLanguage GetShaderLanguage() = 0;
 				
 				virtual bool EndFrame() = 0;
 				
 				virtual Mesh *NewMesh() = 0;
 				virtual Mesh *NewMesh(const std::vector<Vertex> vert, const std::vector<unsigned int> ind) = 0;
-				virtual Shader *NewShader(std::string vert_src, std::string frag_src) = 0;
+				virtual Shader *NewShader(const ShaderFile &file) = 0;
 				
 				//Get error
 				const Error &GetError() const { return error; }

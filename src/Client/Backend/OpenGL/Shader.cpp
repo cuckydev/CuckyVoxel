@@ -1,5 +1,7 @@
 #include "Shader.h"
 
+#include <iostream>
+
 namespace Backend
 {
 	namespace Render
@@ -38,32 +40,13 @@ namespace Backend
 			return false;
 		}
 		
-		GLint Shader_OpenGL::GetUniformLocation(std::string loc)
-		{
-			//Use previously defined location
-			auto key_loc = uniform_map.find(loc);
-			if (key_loc != uniform_map.end())
-				return key_loc->second;
-			
-			//Find and remember location
-			GLint uniform_loc = glGetUniformLocation(program_id, loc.c_str());
-			if (uniform_loc == -1)
-			{
-				error.Push("Failed to get uniform location of " + loc);
-				return -1;
-			}
-			uniform_map[loc] = uniform_loc;
-			return uniform_loc;
-		}
-		
-		//Constructor and destructor
-		Shader_OpenGL::Shader_OpenGL(std::string src_vert, std::string src_frag)
+		bool Shader_OpenGL::CompileShader(std::string vert_src, std::string frag_src)
 		{
 			//Compile our vertex and fragment shaders
-			if (CompileSource(src_vert, &vertex_id, GL_VERTEX_SHADER))
-				return;
-			if (CompileSource(src_frag, &fragment_id, GL_FRAGMENT_SHADER))
-				return;
+			if (CompileSource(vert_src, &vertex_id, GL_VERTEX_SHADER))
+				return true;
+			if (CompileSource(frag_src, &fragment_id, GL_FRAGMENT_SHADER))
+				return true;
 			
 			//Create our program instance and attach the vertex and fragment shaders, then link
 			program_id = glCreateProgram();
@@ -88,7 +71,7 @@ namespace Backend
 				//Return error
 				error.Push(message);
 				delete[] message;
-				return;
+				return true;
 			}
 			
 			//Validate program
@@ -110,8 +93,41 @@ namespace Backend
 				//Return error
 				error.Push(message);
 				delete[] message;
-				return;
+				return true;
 			}
+			return false;
+		}
+		
+		GLint Shader_OpenGL::GetUniformLocation(std::string loc)
+		{
+			//Use previously defined location
+			auto key_loc = uniform_map.find(loc);
+			if (key_loc != uniform_map.end())
+				return key_loc->second;
+			
+			//Find and remember location
+			GLint uniform_loc = glGetUniformLocation(program_id, loc.c_str());
+			if (uniform_loc == -1)
+			{
+				error.Push("Failed to get uniform location of " + loc);
+				return -1;
+			}
+			uniform_map[loc] = uniform_loc;
+			return uniform_loc;
+		}
+		
+		//Constructor and destructor
+		Shader_OpenGL::Shader_OpenGL(std::string vert_src, std::string frag_src)
+		{
+			CompileShader(vert_src, frag_src);
+		}
+		
+		Shader_OpenGL::Shader_OpenGL(const ShaderFile &file)
+		{
+			std::string vert_src, frag_src;
+			if (file.GetSource(ShaderLanguage_GLSL, vert_src, frag_src))
+				return;
+			CompileShader(vert_src, frag_src);
 		}
 		
 		Shader_OpenGL::~Shader_OpenGL()

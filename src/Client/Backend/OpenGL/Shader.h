@@ -23,11 +23,13 @@ namespace Backend
 			private:
 				//Internal interface
 				bool CompileSource(std::string source, GLuint *id, const GLenum type);
+				bool CompileShader(std::string vert_src, std::string frag_src);
 				GLint GetUniformLocation(std::string loc);
 				
 			public:
 				//Constructor and destructor
-				Shader_OpenGL(std::string src_vert, std::string src_frag);
+				Shader_OpenGL(std::string vert_src, std::string frag_src);
+				Shader_OpenGL(const ShaderFile &file);
 				~Shader_OpenGL() override;
 				
 				//Shader interface

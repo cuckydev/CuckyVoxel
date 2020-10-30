@@ -79,6 +79,8 @@ if(COMPILE_CLIENT)
 		"src/Client/Backend/Backend.h"
 		"src/Client/Backend/Core.h"
 		"src/Client/Backend/Render.h"
+		"src/Client/Backend/ShaderFile.cpp"
+		"src/Client/Backend/ShaderFile.h"
 	)
 	
 	# Compile SDL2 backend

@@ -42,7 +42,7 @@ namespace Backend
 			
 			//Get positions in buffer that mark each of the attributes
 			GLfloat *position = data;
-			GLfloat *uv = position + (vert_size * VERTEX_POS_ELEMENTS);
+			GLfloat *uv = position + (vert_size * VERTEX_POSITION_ELEMENTS);
 			GLfloat *normal = uv + (vert_size * VERTEX_UV_ELEMENTS);
 			GLfloat *colour = normal + (vert_size * VERTEX_NORMAL_ELEMENTS);
 			
@@ -50,27 +50,27 @@ namespace Backend
 			GLfloat *datap = data;
 			for (auto &i : vert)
 			{
-				*datap++ = i.x;
-				*datap++ = i.y;
-				*datap++ = i.z;
+				*datap++ = i.position[0];
+				*datap++ = i.position[1];
+				*datap++ = i.position[2];
 			}
 			for (auto &i : vert)
 			{
-				*datap++ = i.u;
-				*datap++ = i.v;
+				*datap++ = i.uv[0];
+				*datap++ = i.uv[1];
 			}
 			for (auto &i : vert)
 			{
-				*datap++ = i.nx;
-				*datap++ = i.ny;
-				*datap++ = i.nz;
+				*datap++ = i.normal[0];
+				*datap++ = i.normal[1];
+				*datap++ = i.normal[2];
 			}
 			for (auto &i : vert)
 			{
-				*datap++ = i.r;
-				*datap++ = i.g;
-				*datap++ = i.b;
-				*datap++ = i.a;
+				*datap++ = i.colour[0];
+				*datap++ = i.colour[1];
+				*datap++ = i.colour[2];
+				*datap++ = i.colour[3];
 			}
 			
 			//Bind to VAO
