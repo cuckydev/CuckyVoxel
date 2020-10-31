@@ -1,6 +1,7 @@
 #pragma once
 #include <GL/glew.h>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include "../Render.h"
 
@@ -22,7 +23,7 @@ namespace Backend
 				
 			private:
 				//Internal interface
-				bool CompileSource(std::string source, GLuint *id, const GLenum type);
+				bool CompileSource(std::string_view source, GLuint &id, const GLenum type);
 				bool CompileShader(std::string vert_src, std::string frag_src);
 				GLint GetUniformLocation(std::string loc);
 				

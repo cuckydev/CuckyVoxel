@@ -7,40 +7,26 @@ namespace Backend
 	namespace Render
 	{
 		//Internal interface
-		bool Shader_OpenGL::CompileSource(std::string source, GLuint *id, const GLenum type)
+		bool Shader_OpenGL::CompileSource(std::string_view source, GLuint &id, const GLenum type)
 		{
 			//Create our shader instance
-			GLuint new_id = glCreateShader(type);
-			*id = new_id;
+			id = glCreateShader(type);
 			
 			//Compile shader
-			const char *source_cstr = source.c_str();
-			glShaderSource(new_id, 1, &source_cstr, nullptr);
-			glCompileShader(new_id);
+			const GLchar* const source_ptr = source.data();
+			const GLint source_length = source.length();
+			glShaderSource(id, 1, &source_ptr, &source_length);
+			glCompileShader(id);
 			
-			//Test for shader compilation errors
-			GLint result;
-			glGetShaderiv(new_id, GL_COMPILE_STATUS, &result);
+			//Check for shader compilation errors
+			GLint log_length;
+			glGetShaderiv(id, GL_INFO_LOG_LENGTH, &log_length);
 			
-			if (result == GL_FALSE)
+			if (log_length)
 			{
-				//Get shader error length
-				GLint length;
-				glGetShaderiv(new_id, GL_INFO_LOG_LENGTH, &length);
-				
-				//Get shader error
-				char *message = new char[length];
-				if (message == nullptr)
-				{
-					error.Push("Failed to compile shader source");
-					return true;
-				}
-				glGetShaderInfoLog(new_id, length, nullptr, message);
-				
-				//Return error
-				error.Push(message);
-				delete[] message;
-				return true;
+				std::string info_log(log_length, 0);
+				glGetShaderInfoLog(id, log_length, nullptr, info_log.data());
+				return error.Push(info_log);
 			}
 			return false;
 		}
@@ -48,67 +34,28 @@ namespace Backend
 		bool Shader_OpenGL::CompileShader(std::string vert_src, std::string frag_src)
 		{
 			//Compile our vertex and fragment shaders
-			if (CompileSource(vert_src, &vertex_id, GL_VERTEX_SHADER))
+			if (CompileSource(vert_src, vertex_id, GL_VERTEX_SHADER))
 				return true;
-			if (CompileSource(frag_src, &fragment_id, GL_FRAGMENT_SHADER))
+			if (CompileSource(frag_src, fragment_id, GL_FRAGMENT_SHADER))
 				return true;
 			
-			//Create our program instance and attach the vertex and fragment shaders, then link
+			//Create our program instance and link the vertex and fragment shaders
 			program_id = glCreateProgram();
 			glAttachShader(program_id, vertex_id);
 			glAttachShader(program_id, fragment_id);
 			glLinkProgram(program_id);
+			glDetachShader(program_id, vertex_id);
+			glDetachShader(program_id, fragment_id);
 			
-			//Test for program linking errors
-			GLint result;
-			glGetShaderiv(program_id, GL_LINK_STATUS, &result);
+			//Check for program link errors
+			GLint log_length;
+			glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &log_length);
 			
-			if (result == GL_FALSE)
+			if (log_length)
 			{
-				//Get shader error length
-				GLint length;
-				glGetShaderiv(program_id, GL_INFO_LOG_LENGTH, &length);
-				
-				//Get shader error
-				char *message = new char[length];
-				if (message == nullptr)
-				{
-					error.Push("Failed to link shader program");
-					return true;
-				}
-				glGetShaderInfoLog(program_id, length, nullptr, message);
-				
-				//Return error
-				error.Push(message);
-				delete[] message;
-				return true;
-			}
-			
-			//Validate program
-			glValidateProgram(program_id);
-			
-			//Test for program validation errors
-			glGetShaderiv(program_id, GL_VALIDATE_STATUS, &result);
-			
-			if (result == GL_FALSE)
-			{
-				//Get shader error length
-				GLint length;
-				glGetShaderiv(program_id, GL_INFO_LOG_LENGTH, &length);
-				
-				//Get shader error
-				char *message = new char[length];
-				if (message == nullptr)
-				{
-					error.Push("Failed to validate shader program");
-					return true;
-				}
-				glGetShaderInfoLog(program_id, length, nullptr, message);
-				
-				//Return error
-				error.Push(message);
-				delete[] message;
-				return true;
+				std::string info_log(log_length, 0);
+				glGetProgramInfoLog(program_id, log_length, nullptr, info_log.data());
+				return error.Push(info_log);
 			}
 			return false;
 		}
