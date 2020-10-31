@@ -86,6 +86,9 @@ namespace Backend
 		if (render != nullptr)
 			if (render->SetConfig(config.render_config))
 				return error.Push(render->GetError());
+		if (event != nullptr)
+			if (event->SetConfig(config.event_config))
+				return error.Push(event->GetError());
 		return false;
 	}
 }

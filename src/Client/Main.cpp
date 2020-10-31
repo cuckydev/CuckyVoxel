@@ -10,8 +10,16 @@
 int main(int argc, char *argv[])
 {
 	//Get executable directory
-	std::string executable_dir = argv[0];
-	executable_dir = executable_dir.substr(0, executable_dir.find_last_of("/\\") + 1);
+	std::string executable_dir;
+	if (argc > 0)
+	{
+		executable_dir = argv[0];
+		executable_dir = executable_dir.substr(0, executable_dir.find_last_of("/\\") + 1);
+	}
+	else
+	{
+		executable_dir = "./";
+	}
 	
 	//Initialize backend
 	static const Backend::Config config = {
@@ -23,6 +31,7 @@ int main(int argc, char *argv[])
 			854, //width
 			480, //height
 		},
+		{}, //event_config
 	};;
 	
 	Backend::Backend *backend = new Backend::Backend(Backend::Type_SDL2, config);

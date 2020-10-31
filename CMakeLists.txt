@@ -12,6 +12,7 @@ option(BACKEND_SDL2 "Enable the SDL2 backend (does nothing for server binaries)"
 
 option(LTO "Enable link-time optimization" OFF)
 option(PKG_CONFIG_STATIC_LIBS "On platforms with pkg-config, static-link the dependencies (good for Windows builds, so you don't need to bundle DLL files)" OFF)
+option(MSVC_LINK_STATIC_RUNTIME "Link the static MSVC runtime library (Visual Studio only)" OFF)
 
 #########
 # Setup #
@@ -158,7 +159,7 @@ if(COMPILE_CLIENT)
 		# Find GLEW
 		find_package(GLEW)
 		if(PKG_CONFIG_FOUND)
-			pkg_check_modules(sdl2 QUIET IMPORTED_TARGET sdl2)
+			pkg_check_modules(glew QUIET IMPORTED_TARGET glew)
 		endif()
 		
 		# Link GLEW
@@ -229,6 +230,11 @@ if(LTO)
 	if(result)
 		set_target_properties(CuckyVoxel PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
 	endif()
+endif()
+
+# Statically link other libraries
+if(PKG_CONFIG_STATIC_LIBS)
+	target_link_options(CuckyVoxel PRIVATE "-static")
 endif()
 
 ########

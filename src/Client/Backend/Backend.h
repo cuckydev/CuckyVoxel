@@ -19,6 +19,7 @@ namespace Backend
 	{
 		Core::Config core_config;
 		Render::Config render_config;
+		Event::Config event_config;
 	};
 	
 	//Backend container class

@@ -22,7 +22,7 @@ namespace Backend
 			GLint log_length;
 			glGetShaderiv(id, GL_INFO_LOG_LENGTH, &log_length);
 			
-			if (log_length)
+			if (log_length > 1)
 			{
 				std::string info_log(log_length, 0);
 				glGetShaderInfoLog(id, log_length, nullptr, info_log.data());
@@ -51,7 +51,7 @@ namespace Backend
 			GLint log_length;
 			glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &log_length);
 			
-			if (log_length)
+			if (log_length > 1)
 			{
 				std::string info_log(log_length, 0);
 				glGetProgramInfoLog(program_id, log_length, nullptr, info_log.data());
