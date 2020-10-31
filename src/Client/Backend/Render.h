@@ -8,12 +8,24 @@ namespace Backend
 {
 	namespace Render
 	{
-		//General render types
+		//Render types
 		struct Config
 		{
 			std::string title;
 			bool fullscreen, resizable;
 			unsigned width, height;
+		};
+		
+		enum DepthCompare
+		{
+			DepthCompare_Never,
+			DepthCompare_Less,
+			DepthCompare_Equal,
+			DepthCompare_LessEqual,
+			DepthCompare_Greater,
+			DepthCompare_NotEqual,
+			DepthCompare_GreaterEqual,
+			DepthCompare_Always,
 		};
 		
 		//Vertex types
@@ -29,6 +41,26 @@ namespace Backend
 			float uv[VERTEX_UV_ELEMENTS];
 			float normal[VERTEX_NORMAL_ELEMENTS];
 			float colour[VERTEX_COLOUR_ELEMENTS];
+		};
+		
+		//Texture class
+		class Texture
+		{
+			protected:
+				//Error
+				Error error;
+				
+			public:
+				//Virtual destructor
+				virtual ~Texture() {}
+				
+				//Texture interface
+				virtual bool SetData(const uint8_t *data, const unsigned int width, const unsigned int height) = 0;
+				virtual bool Bind() = 0;
+				virtual bool Unbind() = 0;
+				
+				//Get error
+				const Error &GetError() const { return error; }
 		};
 		
 		//Mesh base class
@@ -95,6 +127,12 @@ namespace Backend
 				
 				virtual bool EndFrame() = 0;
 				
+				virtual void SetDepthCompare(DepthCompare depth_compare) = 0;
+				virtual bool ClearColour(float r, float g, float b) = 0;
+				virtual bool ClearDepth(float depth) = 0;
+				
+				virtual Texture *NewTexture() = 0;
+				virtual Texture *NewTexture(const uint8_t *data, const unsigned int width, const unsigned int height) = 0;
 				virtual Mesh *NewMesh() = 0;
 				virtual Mesh *NewMesh(const std::vector<Vertex> vert, const std::vector<unsigned int> ind) = 0;
 				virtual Shader *NewShader(const ShaderFile &file) = 0;

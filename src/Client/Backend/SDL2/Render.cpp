@@ -57,10 +57,9 @@ namespace Backend
 			if (SDL_GL_SetSwapInterval(-1) < 0)
 				SDL_GL_SetSwapInterval(1);
 			
-			//Initialize GLEW
-			GLenum glew_error = glewInit();
-			if (glew_error != GLEW_OK)
-				return error.Push((const char*)glewGetErrorString(glew_error));
+			//Initialize OpenGL
+			if (InitOpenGL())
+				return true;
 			
 			return false;
 		}

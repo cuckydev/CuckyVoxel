@@ -81,7 +81,12 @@ if(COMPILE_CLIENT)
 		"src/Client/Backend/Render.h"
 		"src/Client/Backend/ShaderFile.cpp"
 		"src/Client/Backend/ShaderFile.h"
+		
+		# Dependencies
+		"lib/lodepng/lodepng.cpp"
 	)
+	
+	target_include_directories(CuckyVoxel PRIVATE "lib")
 	
 	# Compile SDL2 backend
 	if(BACKEND_SDL2)
@@ -138,6 +143,8 @@ if(COMPILE_CLIENT)
 		target_sources(CuckyVoxel PRIVATE
 			"src/Client/Backend/OpenGL/Render.cpp"
 			"src/Client/Backend/OpenGL/Render.h"
+			"src/Client/Backend/OpenGL/Texture.cpp"
+			"src/Client/Backend/OpenGL/Texture.h"
 			"src/Client/Backend/OpenGL/Mesh.cpp"
 			"src/Client/Backend/OpenGL/Mesh.h"
 			"src/Client/Backend/OpenGL/Shader.cpp"
