@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 	}
 	else if (backend->GetError())
 	{
-		std::cout << backend->GetError() << std::endl;
+		std::cout << "backend error " << backend->GetError() << std::endl;
 		return 1;
 	}
 	
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 	}
 	else if (mesh->GetError())
 	{
-		std::cout << mesh->GetError() << std::endl;
+		std::cout << "mesh error " << mesh->GetError() << std::endl;
 		return 1;
 	}
 	
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 	}
 	else if (shader->GetError())
 	{
-		std::cout << shader->GetError() << std::endl;
+		std::cout << "shader error " << shader->GetError() << std::endl;
 		return 1;
 	}
 	
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 	Texture::Data tex_data;
 	if (Texture::ReadTexture(tex_data, executable_dir + "Data/Texture/Test.png"))
 	{
-		std::cout << tex_data.error << std::endl;
+		std::cout << "texture data error " << tex_data.error << std::endl;
 		return 1;
 	}
 	
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 	}
 	else if (texture->GetError())
 	{
-		std::cout << texture->GetError() << std::endl;
+		std::cout << "texture error " << texture->GetError() << std::endl;
 		return 1;
 	}
 	
@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
 		shader->SetUniform("u_projection", 1, &(projection[0][0]));
 		shader->SetUniform("u_view", 1, &(view[0][0]));
 		
-		float rad = (1.0f + glm::sin(rad_mag)) * 1.5f;
+		float rad = (1.25f + glm::sin(rad_mag)) * 1.25f;
 		for (int i = 0; i < 8; i++)
 		{
 			float my_ang = glm::radians(ang + (i * 360.0f / 8));
@@ -194,6 +194,8 @@ int main(int argc, char *argv[])
 			shader->SetUniform("u_model", 1, &(model[0][0]));
 			mesh->Draw();
 		}
+		rad_mag += 0.025f;
+		ang += 1.5f;
 		
 		//End frame
 		if (render->EndFrame())
