@@ -1,8 +1,5 @@
 #include "Render.h"
 
-#include <iostream>
-#include <SDL_events.h>
-
 namespace Backend
 {
 	namespace Render

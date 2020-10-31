@@ -13,7 +13,7 @@ namespace Backend
 		};
 		
 		//Core base class
-		class Core_Base
+		class Core
 		{
 			protected:
 				//Error
@@ -21,9 +21,9 @@ namespace Backend
 				
 			public:
 				//Virtual destructor
-				virtual ~Core_Base() {}
+				virtual ~Core() {}
 				
-				//Interface
+				//Core interface
 				virtual bool SetConfig(const Config config) = 0;
 				
 				//Get error

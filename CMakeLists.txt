@@ -98,6 +98,8 @@ if(COMPILE_CLIENT)
 			"src/Client/Backend/SDL2/Core.h"
 			"src/Client/Backend/SDL2/Render.cpp"
 			"src/Client/Backend/SDL2/Render.h"
+			"src/Client/Backend/SDL2/Event.cpp"
+			"src/Client/Backend/SDL2/Event.h"
 		)
 		
 		# Find SDL2

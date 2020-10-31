@@ -8,7 +8,7 @@ namespace Backend
 {
 	namespace Render
 	{
-		class Render_OpenGL : public Render_Base
+		class Render_OpenGL : public Render
 		{
 			protected:
 				//Internal interface

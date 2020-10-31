@@ -37,7 +37,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	
-	Backend::Render::Render_Base *render = backend->GetRender();
+	//Get subsystems
+	Backend::Render::Render *render = backend->GetRender();
+	Backend::Event::Event *event = backend->GetEvent();
 	
 	//Mesh
 	static const std::vector<Backend::Render::Vertex> vertices = {
@@ -127,18 +129,51 @@ int main(int argc, char *argv[])
 	//Initialize render state
 	render->SetDepthCompare(Backend::Render::DepthCompare_LessEqual);
 	
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 16.0f / 9.0f, 0.1f, 100.f); 
+	glm::mat4 projection; 
 	glm::mat4 view;
-	glm::mat4 model1 = glm::mat4(1.0f);
-	glm::mat4 model2 = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.0f, -1.0f));
+	glm::mat4 model;
 	float translate = 0.0f;
+	float ang = 0.0f;
+	float rad_mag = 0.0f;
+	
+	float mouse_x = 0.0f;
+	float mouse_y = 0.0f;
 	
 	//Render
 	while (1)
 	{
-		view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -translate));
-		translate += 0.01f;
+		//Handle events
+		Backend::Event::EventData event_data;
+		bool quit = false;
+		while (event->PollEvent(event_data))
+		{
+			switch (event_data.type)
+			{
+				case Backend::Event::EventType_Quit:
+					quit = true;
+					break;
+				case Backend::Event::EventType_InputFloat:
+					if (event_data.input_float.device == Backend::Event::InputDevice_Mouse)
+					{
+						if (event_data.input_float.code == Backend::Event::InputCode_Mouse_X)
+							mouse_x = ((float)event_data.input_float.value / render->GetWidth() - 0.5f) * 2.0f;
+						if (event_data.input_float.code == Backend::Event::InputCode_Mouse_Y)
+							mouse_y = ((float)event_data.input_float.value / render->GetHeight() - 0.5f) * 2.0f;
+					}
+					break;
+			}
+		}
+		if (quit)
+			break;
 		
+		//Get new projection vector
+		projection = glm::perspective(glm::radians(45.0f), (float)render->GetWidth() / (float)render->GetHeight(), 0.1f, 100.f);
+		
+		//Move camera
+		translate += (7.0f - translate) * 0.05f;
+		view = glm::lookAt(glm::vec3(translate * -mouse_x, translate * mouse_y, translate), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		
+		//Render scene
 		render->ClearColour(0.5f, 0.5f, 0.5f);
 		render->ClearDepth(1.0f);
 		
@@ -148,18 +183,25 @@ int main(int argc, char *argv[])
 		shader->SetUniform("u_projection", 1, &(projection[0][0]));
 		shader->SetUniform("u_view", 1, &(view[0][0]));
 		
-		shader->SetUniform("u_model", 1, &(model1[0][0]));
-		mesh->Draw();
+		float rad = (1.0f + glm::sin(rad_mag)) * 1.5f;
+		for (int i = 0; i < 8; i++)
+		{
+			float my_ang = glm::radians(ang + (i * 360.0f / 8));
+			model = glm::translate(glm::mat4(1.0f), glm::vec3(glm::cos(my_ang) * rad, 0.0f, glm::sin(my_ang) * rad));
+			shader->SetUniform("u_model", 1, &(model[0][0]));
+			mesh->Draw();
+			model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, glm::cos(my_ang) * rad * 1.25f, glm::sin(my_ang) * rad * 1.25f));
+			shader->SetUniform("u_model", 1, &(model[0][0]));
+			mesh->Draw();
+		}
 		
-		shader->SetUniform("u_model", 1, &(model2[0][0]));
-		mesh->Draw();
-		
-		
+		//End frame
 		if (render->EndFrame())
 			break;
 	}
 	
 	//Delete backend
 	delete backend;
+	
 	return 0;
 }

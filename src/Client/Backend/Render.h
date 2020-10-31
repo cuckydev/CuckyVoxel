@@ -112,7 +112,7 @@ namespace Backend
 		};
 		
 		//Render base class
-		class Render_Base
+		class Render
 		{
 			protected:
 				//Error
@@ -120,7 +120,7 @@ namespace Backend
 				
 			public:
 				//Virtual destructor
-				virtual ~Render_Base() {}
+				virtual ~Render() {}
 				
 				//Render interface
 				virtual bool SetConfig(const Config config) = 0;

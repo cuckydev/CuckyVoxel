@@ -1,6 +1,7 @@
 #pragma once
 #include "Core.h"
 #include "Render.h"
+#include "Event.h"
 
 #include <Common/Util/Error.h>
 
@@ -28,8 +29,9 @@ namespace Backend
 			Error error;
 			
 			//Subsystems
-			Core::Core_Base *core = nullptr;
-			Render::Render_Base *render = nullptr;
+			Core::Core *core = nullptr;
+			Render::Render *render = nullptr;
+			Event::Event *event = nullptr;
 			
 		private:
 			//Internal interface
@@ -45,7 +47,9 @@ namespace Backend
 			bool SetConfig(const Config config);
 			
 			//Get subsystems
-			inline Render::Render_Base *GetRender() { return render; }
+			inline Core::Core *GetCore() { return core; }
+			inline Render::Render *GetRender() { return render; }
+			inline Event::Event *GetEvent() { return event; }
 			
 			//Get error
 			const Error &GetError() const { return error; }

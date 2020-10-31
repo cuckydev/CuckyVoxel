@@ -4,6 +4,7 @@
 #ifdef COMPILE_SDL2
 	#include "SDL2/Core.h"
 	#include "SDL2/Render.h"
+	#include "SDL2/Event.h"
 #endif
 
 namespace Backend
@@ -14,6 +15,7 @@ namespace Backend
 		//Delete previous subsystems
 		delete core; core = nullptr;
 		delete render; render = nullptr;
+		delete event; event = nullptr;
 		
 		//Construct new subsystems
 		switch (type)
@@ -24,6 +26,7 @@ namespace Backend
 			case Type_SDL2:
 				core = new Core::Core_SDL2();
 				render = new Render::Render_SDL2();
+				event = new Event::Event_SDL2();
 				break;
 		#endif
 			default:
@@ -31,10 +34,21 @@ namespace Backend
 		}
 		
 		//Verify subsystems were successfully created
+		if (core == nullptr)
+			return error.Push("Failed to create core subsystem");
+		else if (core->GetError())
+			return error.Push(core->GetError());
+		
 		if (render == nullptr)
 			return error.Push("Failed to create render subsystem");
 		else if (render->GetError())
 			return error.Push(render->GetError());
+		
+		if (event == nullptr)
+			return error.Push("Failed to create event subsystem");
+		else if (event->GetError())
+			return error.Push(event->GetError());
+		
 		return false;
 	}
 	

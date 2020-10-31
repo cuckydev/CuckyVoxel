@@ -5,7 +5,7 @@ namespace Backend
 {
 	namespace Core
 	{
-		class Core_SDL2 : public Core_Base
+		class Core_SDL2 : public Core
 		{
 			public:
 				//Constructors and destructor

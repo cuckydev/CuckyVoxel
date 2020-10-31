@@ -1,6 +1,4 @@
 #include <SDL.h>
-#include <iostream>
-
 #include "Core.h"
 
 namespace Backend
@@ -10,7 +8,13 @@ namespace Backend
 		//Constructors and destructor
 		Core_SDL2::Core_SDL2()
 		{
-			return;
+			//Initialize SDL2
+			SDL_Init(SDL_INIT_AUDIO |
+			         SDL_INIT_VIDEO |
+			         SDL_INIT_JOYSTICK |
+			         SDL_INIT_HAPTIC |
+			         SDL_INIT_GAMECONTROLLER |
+			         SDL_INIT_EVENTS);
 		}
 		
 		Core_SDL2::Core_SDL2(const Config config)
@@ -28,13 +32,6 @@ namespace Backend
 		//Core interface
 		bool Core_SDL2::SetConfig(const Config config)
 		{
-			//Initialize SDL2
-			SDL_Init(SDL_INIT_AUDIO |
-			         SDL_INIT_VIDEO |
-			         SDL_INIT_JOYSTICK |
-			         SDL_INIT_HAPTIC |
-			         SDL_INIT_GAMECONTROLLER |
-			         SDL_INIT_EVENTS);
 			return false;
 		}
 	}
