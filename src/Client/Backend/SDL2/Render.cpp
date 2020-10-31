@@ -31,10 +31,11 @@ namespace Backend
 			SDL_DestroyWindow(window);
 			
 			//Use OpenGL 3.2 core and set other GL attributes
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+			if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) < 0 ||
+			    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG) < 0 ||
+			    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3) < 0 ||
+			    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2) < 0)
+			    return error.Push(SDL_GetError());
 			
 			//Create new window
 			if ((window = SDL_CreateWindow(
@@ -48,8 +49,10 @@ namespace Backend
 				return error.Push(SDL_GetError());
 			
 			//Create new OpenGL context
-			if (SDL_GL_CreateContext(window) == nullptr)
+			if ((gl_context = SDL_GL_CreateContext(window)) == nullptr ||
+			    SDL_GL_MakeCurrent(window, gl_context) < 0)
 				return error.Push(SDL_GetError());
+			
 			
 			//Use VSync
 			if (SDL_GL_SetSwapInterval(-1) < 0)
