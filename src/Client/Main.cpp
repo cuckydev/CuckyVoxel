@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 	Backend::Render::ShaderFile shader_file(executable_dir + "Data/Shader/GenericTexture.shd");
 	if (shader_file.GetError())
 	{
-		std::cout << shader_file.GetError() << std::endl;
+		std::cout << "shader file error " << shader_file.GetError() << std::endl;
 		return 1;
 	}
 	

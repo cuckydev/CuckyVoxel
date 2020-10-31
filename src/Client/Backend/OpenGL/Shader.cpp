@@ -30,6 +30,11 @@ namespace Backend
 				
 				//Get shader error
 				char *message = new char[length];
+				if (message == nullptr)
+				{
+					error.Push("Failed to compile shader source");
+					return true;
+				}
 				glGetShaderInfoLog(new_id, length, nullptr, message);
 				
 				//Return error
@@ -66,6 +71,11 @@ namespace Backend
 				
 				//Get shader error
 				char *message = new char[length];
+				if (message == nullptr)
+				{
+					error.Push("Failed to link shader program");
+					return true;
+				}
 				glGetShaderInfoLog(program_id, length, nullptr, message);
 				
 				//Return error
@@ -88,6 +98,11 @@ namespace Backend
 				
 				//Get shader error
 				char *message = new char[length];
+				if (message == nullptr)
+				{
+					error.Push("Failed to validate shader program");
+					return true;
+				}
 				glGetShaderInfoLog(program_id, length, nullptr, message);
 				
 				//Return error

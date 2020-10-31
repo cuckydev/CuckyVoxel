@@ -59,13 +59,15 @@ namespace Backend
 		
 		ShaderFile::ShaderFile(std::string path)
 		{
-			//Open file then read stream
+			//Open file stream
 			std::ifstream stream = std::ifstream(path, std::ifstream::binary);
 			if (!stream)
 			{
 				error.Push("Failed to open shader file at " + path);
 				return;
 			}
+			
+			//Read stream
 			Read(stream);
 			stream.close();
 		}
