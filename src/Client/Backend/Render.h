@@ -125,6 +125,9 @@ namespace Backend
 				//Render interface
 				virtual bool SetConfig(const Config config) = 0;
 				
+				virtual unsigned int GetWidth() = 0;
+				virtual unsigned int GetHeight() = 0;
+				
 				virtual bool EndFrame() = 0;
 				
 				virtual void SetDepthCompare(DepthCompare depth_compare) = 0;

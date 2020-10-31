@@ -13,6 +13,7 @@ namespace Backend
 			protected:
 				//Internal interface
 				bool InitOpenGL();
+				void SetViewport(unsigned int width, unsigned int height);
 				
 			public:
 				//Virtual destructor

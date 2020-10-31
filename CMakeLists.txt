@@ -73,6 +73,8 @@ if(COMPILE_CLIENT)
 	target_sources(CuckyVoxel PRIVATE
 		# CuckyVoxel client
 		"src/Client/Main.cpp"
+		"src/Client/Texture.cpp"
+		"src/Client/Texture.h"
 		
 		# Backend
 		"src/Client/Backend/Backend.cpp"

@@ -22,6 +22,9 @@ namespace Backend
 				//Render interface
 				bool SetConfig(const Config config) override;
 				
+				unsigned int GetWidth() override;
+				unsigned int GetHeight() override;
+				
 				bool EndFrame() override;
 		};
 	}

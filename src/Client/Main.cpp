@@ -2,14 +2,10 @@
 #include "Backend/Backend.h"
 
 #include "Backend/ShaderFile.h"
+#include "Texture.h"
 
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
-#include <GL/glew.h>
-
-#include <stdio.h>
-#include <lodepng/lodepng.h>
 
 int main(int argc, char *argv[])
 {
@@ -108,28 +104,25 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	
-	//Read texture file
-	FILE *fp = fopen((executable_dir + "Data/Texture/Test.png").c_str(), "rb");
-	if (fp == nullptr)
+	//Texture
+	Texture::Data tex_data;
+	if (Texture::ReadTexture(tex_data, executable_dir + "Data/Texture/Test.png"))
+	{
+		std::cout << tex_data.error << std::endl;
 		return 1;
-	fseek(fp, 0, SEEK_END);
-	size_t size = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-	uint8_t *buffer = new uint8_t[size];
-	fread(buffer, size, 1, fp);
-	fclose(fp);
+	}
 	
-	//Process our file as PNG
-	uint8_t *data;
-	unsigned int width, height;
-	
-	unsigned int decodeError;
-	if ((decodeError = lodepng_decode32((unsigned char**)&data, &width, &height, buffer, size)) != 0)
+	Backend::Render::Texture *texture = render->NewTexture(tex_data.data, tex_data.width, tex_data.height);
+	if (texture == nullptr)
+	{
+		std::cout << "Failed to create texture instance" << std::endl;
 		return 1;
-	delete[] buffer;
-	
-	//Create texture
-	Backend::Render::Texture *texture = render->NewTexture(data, width, height);
+	}
+	else if (texture->GetError())
+	{
+		std::cout << texture->GetError() << std::endl;
+		return 1;
+	}
 	
 	//Initialize render state
 	render->SetDepthCompare(Backend::Render::DepthCompare_LessEqual);
@@ -146,7 +139,7 @@ int main(int argc, char *argv[])
 		view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -translate));
 		translate += 0.01f;
 		
-		render->ClearColour(0.0f, 0.0f, 0.0f);
+		render->ClearColour(0.5f, 0.5f, 0.5f);
 		render->ClearDepth(1.0f);
 		
 		texture->Bind();

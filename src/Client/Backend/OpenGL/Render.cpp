@@ -24,6 +24,12 @@ namespace Backend
 			return false;
 		}
 		
+		void Render_OpenGL::SetViewport(unsigned int width, unsigned int height)
+		{
+			//Use given dimensions
+			glViewport(0, 0, width, height);
+		}
+		
 		//Render interface
 		void Render_OpenGL::SetDepthCompare(DepthCompare depth_compare)
 		{

@@ -1,6 +1,7 @@
 #include "Render.h"
 
-#include <GL/glew.h>
+#include <iostream>
+#include <SDL_events.h>
 
 namespace Backend
 {
@@ -45,7 +46,7 @@ namespace Backend
 					SDL_WINDOWPOS_CENTERED, //y
 					config.width, //width
 					config.height, //height
-					SDL_WINDOW_OPENGL | (config.resizable ? SDL_WINDOW_RESIZABLE : 0) //flags
+					SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | (config.resizable ? SDL_WINDOW_RESIZABLE : 0) //flags
 				)) == nullptr)
 				return error.Push(SDL_GetError());
 			
@@ -64,9 +65,28 @@ namespace Backend
 			return false;
 		}
 		
+		unsigned int Render_SDL2::GetWidth()
+		{
+			int width;
+			SDL_GL_GetDrawableSize(window, &width, nullptr);
+			return width;
+		}
+		
+		unsigned int Render_SDL2::GetHeight()
+		{
+			int height;
+			SDL_GL_GetDrawableSize(window, nullptr, &height);
+			return height;
+		}
+		
 		bool Render_SDL2::EndFrame()
 		{
+			//Swap window
 			SDL_GL_SwapWindow(window);
+			
+			//Use window dimensions
+			SetViewport(GetWidth(), GetHeight());
+			
 			return false;
 		}
 	}

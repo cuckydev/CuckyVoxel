@@ -26,13 +26,6 @@ namespace Backend
 		//Internal interface
 		bool ShaderFile::Read(std::istream &stream)
 		{
-			//Ensure stream is good
-			if (!stream.good())
-			{
-				error.Push("Attempt to read stream that isn't good");
-				return true;
-			}
-			
 			//Read source
 			for (size_t i = 0; i < ShaderLanguage_Num; i++)
 			{
@@ -53,6 +46,13 @@ namespace Backend
 		//Constructor and destructor
 		ShaderFile::ShaderFile(std::istream stream)
 		{
+			//Ensure stream is good
+			if (!stream)
+			{
+				error.Push("Attempt to read bad stream");
+				return;
+			}
+			
 			//Read stream
 			Read(stream);
 		}
@@ -61,7 +61,7 @@ namespace Backend
 		{
 			//Open file then read stream
 			std::ifstream stream = std::ifstream(path, std::ifstream::binary);
-			if (!stream.is_open())
+			if (!stream)
 			{
 				error.Push("Failed to open shader file at " + path);
 				return;
