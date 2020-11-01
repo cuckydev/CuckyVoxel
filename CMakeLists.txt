@@ -42,8 +42,12 @@ add_executable(CuckyVoxel WIN32
 	"src/Common/World/WorldDef.h"
 	"src/Common/World/World.cpp"
 	"src/Common/World/World.h"
-	"src/Common/World/ChunkGenerate.cpp"
-	"src/Common/World/ChunkGenerate.h"
+	"src/Common/World/WorldPosition.cpp"
+	"src/Common/World/WorldPosition.h"
+	"src/Common/World/ChunkManager.cpp"
+	"src/Common/World/ChunkManager.h"
+	"src/Common/World/Chunk.cpp"
+	"src/Common/World/Chunk.h"
 )
 
 target_include_directories(CuckyVoxel PRIVATE "src")

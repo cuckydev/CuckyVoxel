@@ -128,6 +128,9 @@ namespace Backend
 				virtual unsigned int GetWidth() = 0;
 				virtual unsigned int GetHeight() = 0;
 				
+				virtual void LockMouse() = 0;
+				virtual void UnlockMouse() = 0;
+				
 				virtual bool EndFrame() = 0;
 				
 				virtual void SetDepthCompare(DepthCompare depth_compare) = 0;

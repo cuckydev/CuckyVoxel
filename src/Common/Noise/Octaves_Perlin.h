@@ -9,7 +9,7 @@ namespace Noise
 	{
 		private:
 			//Simplex octaves
-			Perlin *octave;
+			Perlin *octave = nullptr;
 			int32_t octaves;
 			
 		public:

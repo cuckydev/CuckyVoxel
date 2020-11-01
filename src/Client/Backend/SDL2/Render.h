@@ -25,6 +25,9 @@ namespace Backend
 				unsigned int GetWidth() override;
 				unsigned int GetHeight() override;
 				
+				void LockMouse() override;
+				void UnlockMouse() override;
+				
 				bool EndFrame() override;
 		};
 	}

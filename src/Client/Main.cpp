@@ -6,6 +6,11 @@
 
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
+
+#include <Common/World/World.h>
+
+#include <GL/glew.h>
 
 int main(int argc, char *argv[])
 {
@@ -50,53 +55,8 @@ int main(int argc, char *argv[])
 	Backend::Render::Render *render = backend->GetRender();
 	Backend::Event::Event *event = backend->GetEvent();
 	
-	//Mesh
-	static const std::vector<Backend::Render::Vertex> vertices = {
-		{
-			{-0.5f, 0.5f, 0.0f},
-			{0.0f, 0.0f},
-			{0.0f, 0.0f, 1.0f},
-			{0.0f, 0.0f, 1.0f, 1.0f},
-		},
-		{
-			{0.5f, 0.5f, 0.0f},
-			{1.0f, 0.0f},
-			{0.0f, 0.0f, 1.0f},
-			{0.0f, 1.0f, 0.0f, 1.0f},
-		},
-		{
-			{0.5f, -0.5f, 0.0f},
-			{1.0f, 1.0f},
-			{0.0f, 0.0f, 1.0f},
-			{1.0f, 0.0f, 0.0f, 1.0f},
-		},
-		{
-			{-0.5f, -0.5f, 0.0f},
-			{0.0f, 1.0f},
-			{0.0f, 0.0f, 1.0f},
-			{1.0f, 1.0f, 1.0f, 1.0f},
-		},
-	};
-	
-	static const std::vector<unsigned int> indices = {
-		3, 1, 0,
-		1, 3, 2,
-	};
-	
-	Backend::Render::Mesh *mesh = render->NewMesh(vertices, indices);
-	if (mesh == nullptr)
-	{
-		std::cout << "Failed to create mesh instance" << std::endl;
-		return 1;
-	}
-	else if (mesh->GetError())
-	{
-		std::cout << "mesh error " << mesh->GetError() << std::endl;
-		return 1;
-	}
-	
 	//Shader
-	Backend::Render::ShaderFile shader_file(executable_dir + "Data/Shader/GenericTexture.shd");
+	Backend::Render::ShaderFile shader_file(executable_dir + "Data/Shader/Generic.shd");
 	if (shader_file.GetError())
 	{
 		std::cout << "shader file error " << shader_file.GetError() << std::endl;
@@ -115,40 +75,54 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	
-	//Texture
-	Texture::Data tex_data;
-	if (Texture::ReadTexture(tex_data, executable_dir + "Data/Texture/Test.png"))
-	{
-		std::cout << "texture data error " << tex_data.error << std::endl;
-		return 1;
-	}
-	
-	Backend::Render::Texture *texture = render->NewTexture(tex_data.data, tex_data.width, tex_data.height);
-	if (texture == nullptr)
-	{
-		std::cout << "Failed to create texture instance" << std::endl;
-		return 1;
-	}
-	else if (texture->GetError())
-	{
-		std::cout << "texture error " << texture->GetError() << std::endl;
-		return 1;
-	}
-	
 	//Initialize render state
 	render->SetDepthCompare(Backend::Render::DepthCompare_LessEqual);
+	render->LockMouse();
 	
-	glm::mat4 projection; 
+	//Game state
+	World::World world;
+	
+	//Generate world
+	World::Chunk new_chunk = (world.GetChunkManager())->CreateChunk({0, 0});
+	new_chunk.GenerateTerrain();
+	
+	//Create chunk mesh
+	World::ChunkMeshData mesh_data = new_chunk.GetMeshData();
+	
+	std::vector<Backend::Render::Vertex> vert;
+	for (auto &i : mesh_data.vert)
+	{
+		vert.push_back({
+			{i.x, i.y, i.z},
+			{0.0f, 0.0f},
+			{0.0f, 0.0f, 0.0f},
+			{i.r, i.g, i.b, 1.0f},
+		});
+	}
+	
+	Backend::Render::Mesh *mesh = render->NewMesh(vert, mesh_data.ind);
+	if (mesh == nullptr)
+	{
+		std::cout << "Failed to create mesh instance" << std::endl;
+		return 1;
+	}
+	else if (mesh->GetError())
+	{
+		std::cout << "mesh error " << mesh->GetError() << std::endl;
+		return 1;
+	}
+	
+	//Render scene
+	glm::mat4 projection;
 	glm::mat4 view;
 	glm::mat4 model;
-	float translate = 0.0f;
-	float ang = 0.0f;
-	float rad_mag = 0.0f;
 	
-	float mouse_x = 0.0f;
-	float mouse_y = 0.0f;
+	glm::vec3 cam_pos = {120.0f, 120.0f, 120.0f};
+	float cam_turn = 0.0f;
+	float cam_look = 0.0f;
+	glm::vec3 cam_up = {0.0f, 1.0f,  0.0f};
+	bool w = false, a = false, s = false, d = false;
 	
-	//Render
 	while (1)
 	{
 		//Handle events
@@ -161,58 +135,98 @@ int main(int argc, char *argv[])
 				case Backend::Event::EventType_Quit:
 					quit = true;
 					break;
-				case Backend::Event::EventType_InputFloat:
-					if (event_data.input_float.device == Backend::Event::InputDevice_Mouse)
+				case Backend::Event::EventType_InputBool:
+					switch (event_data.input_bool.device)
 					{
-						if (event_data.input_float.code == Backend::Event::InputCode_Mouse_X)
-							mouse_x = ((float)event_data.input_float.value / render->GetWidth() - 0.5f) * 2.0f;
-						if (event_data.input_float.code == Backend::Event::InputCode_Mouse_Y)
-							mouse_y = ((float)event_data.input_float.value / render->GetHeight() - 0.5f) * 2.0f;
+						case Backend::Event::InputDevice_Keyboard:
+							switch (event_data.input_bool.code)
+							{
+								case Backend::Event::InputCode_W:
+									w = event_data.input_bool.value;
+									break;
+								case Backend::Event::InputCode_A:
+									a = event_data.input_bool.value;
+									break;
+								case Backend::Event::InputCode_S:
+									s = event_data.input_bool.value;
+									break;
+								case Backend::Event::InputCode_D:
+									d = event_data.input_bool.value;
+									break;
+							}
+							break;
+					}
+					break;
+				case Backend::Event::EventType_InputFloat:
+					switch (event_data.input_float.device)
+					{
+						case Backend::Event::InputDevice_Mouse:
+							switch (event_data.input_float.code)
+							{
+								case Backend::Event::InputCode_Mouse_X:
+									cam_turn += event_data.input_float.rel_value * 0.01f;
+									break;
+								case Backend::Event::InputCode_Mouse_Y:
+									cam_look += event_data.input_float.rel_value * -0.01f;
+									if (cam_look > 1.5f)
+										cam_look = 1.5f;
+									if (cam_look < -1.5f)
+										cam_look = -1.5f;
+									break;
+							}
+							break;
 					}
 					break;
 			}
 		}
 		if (quit)
 			break;
-		
-		//Get new projection vector
-		projection = glm::perspective(glm::radians(45.0f), (float)render->GetWidth() / (float)render->GetHeight(), 0.1f, 100.f);
+			
+		//Get new projection matrix
+		projection = glm::perspective(glm::radians(70.0f), (float)render->GetWidth() / (float)render->GetHeight(), 0.1f, 1024.f);
 		
 		//Move camera
-		translate += (7.0f - translate) * 0.05f;
-		view = glm::lookAt(glm::vec3(translate * -mouse_x, translate * mouse_y, translate), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::vec3 cam_dir = {
+			-glm::sin(cam_turn) * glm::cos(cam_look),
+			glm::sin(cam_look),
+			glm::cos(cam_turn) * glm::cos(cam_look),
+		};
 		
-		//Render scene
-		render->ClearColour(0.5f, 0.5f, 0.5f);
-		render->ClearDepth(1.0f);
+		float cam_speed = 0.75f;
+		if (w)
+			cam_pos += cam_dir * cam_speed;
+		if (s)
+			cam_pos -= cam_dir * cam_speed;
+		if (a)
+			cam_pos -= glm::normalize(glm::cross(cam_dir, cam_up)) * cam_speed;
+		if (d)
+			cam_pos += glm::normalize(glm::cross(cam_dir, cam_up)) * cam_speed;
 		
-		texture->Bind();
-		
+		//Use generic shader
 		shader->Bind();
 		shader->SetUniform("u_projection", 1, &(projection[0][0]));
+		
+		//Render sky
+		view = glm::lookAt({}, cam_dir, {0.0f, 1.0f, 0.0f});
 		shader->SetUniform("u_view", 1, &(view[0][0]));
 		
-		float rad = (1.25f + glm::sin(rad_mag)) * 1.25f;
-		for (int i = 0; i < 8; i++)
-		{
-			float my_ang = glm::radians(ang + (i * 360.0f / 8));
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(glm::cos(my_ang) * rad, 0.0f, glm::sin(my_ang) * rad));
-			shader->SetUniform("u_model", 1, &(model[0][0]));
-			mesh->Draw();
-			model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, glm::cos(my_ang) * rad * 1.25f, glm::sin(my_ang) * rad * 1.25f));
-			shader->SetUniform("u_model", 1, &(model[0][0]));
-			mesh->Draw();
-		}
-		rad_mag += 0.025f;
-		ang += 1.5f;
+		render->ClearColour(0.7529412f, 0.8470588f, 1.0f);
+		render->ClearDepth(1.0f);
+		
+		//Render scene
+		view = glm::lookAt(cam_pos, cam_pos + cam_dir, {0.0f, 1.0f, 0.0f});
+		shader->SetUniform("u_view", 1, &(view[0][0]));
+		
+		model = glm::mat4(1.0f);
+		shader->SetUniform("u_model", 1, &(model[0][0]));
+		mesh->Draw();
 		
 		//End frame
 		if (render->EndFrame())
 			break;
 	}
 	
-	//Delete created objects
-	delete texture;
+	//Delete render objects
 	delete mesh;
 	delete shader;
 	

@@ -2,6 +2,8 @@
 #include "Event.h"
 #include <unordered_map>
 
+#include <iostream>
+
 namespace Backend
 {
 	namespace Event
@@ -362,6 +364,9 @@ namespace Backend
 						new_data.input_float.value = (float)event.motion.y;
 						new_data.input_float.rel_value = (float)event.motion.yrel;
 						event_queue.push_back(new_data);
+						break;
+					case SDL_CONTROLLERBUTTONDOWN:
+					case SDL_CONTROLLERBUTTONUP:
 						break;
 					default:
 						break;

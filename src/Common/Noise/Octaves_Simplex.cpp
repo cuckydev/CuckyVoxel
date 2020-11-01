@@ -14,6 +14,12 @@ namespace Noise
 		SetOctaves(random, set_octaves);
 	}
 	
+	Octaves_Simplex::Octaves_Simplex(int64_t seed, int32_t set_octaves)
+	{
+		//Set octaves
+		SetOctaves(seed, set_octaves);
+	}
+	
 	Octaves_Simplex::~Octaves_Simplex()
 	{
 		//Delete octaves
@@ -25,10 +31,20 @@ namespace Noise
 	{
 		//Set octaves
 		octaves = set_octaves;
-		
 		delete[] octave;
-		octave = new Simplex[set_octaves]{random};
 		
+		octave = new Simplex[set_octaves]{random};
+		return octave != nullptr;
+	}
+	
+	bool Octaves_Simplex::SetOctaves(int64_t seed, int32_t set_octaves)
+	{
+		//Set octaves
+		octaves = set_octaves;
+		delete[] octave;
+		
+		Random random(seed);
+		octave = new Simplex[set_octaves]{random};
 		return octave != nullptr;
 	}
 	

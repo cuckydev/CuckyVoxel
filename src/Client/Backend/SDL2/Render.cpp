@@ -1,5 +1,7 @@
 #include "Render.h"
 
+#include "SDL_mouse.h"
+
 namespace Backend
 {
 	namespace Render
@@ -77,6 +79,17 @@ namespace Backend
 			int height;
 			SDL_GL_GetDrawableSize(window, nullptr, &height);
 			return height;
+		}
+		
+		void Render_SDL2::LockMouse()
+		{
+			SDL_SetRelativeMouseMode(SDL_TRUE);
+			SDL_WarpMouseInWindow(window, GetWidth() / 2, GetHeight() / 2);
+		}
+		
+		void Render_SDL2::UnlockMouse()
+		{
+			SDL_SetRelativeMouseMode(SDL_FALSE);
 		}
 		
 		bool Render_SDL2::EndFrame()
