@@ -48,26 +48,21 @@ add_executable(CuckyVoxel WIN32
 
 target_include_directories(CuckyVoxel PRIVATE "src")
 
-# Some other CMake and compiler setup stuff
 list(APPEND CMAKE_MODULE_PATH
 	"${CMAKE_SOURCE_DIR}/cmake"
 )
 
-set_target_properties(CuckyVoxel PROPERTIES
-	CXX_STANDARD 17
-	CXX_STANDARD_REQUIRED ON
-	CXX_EXTENSIONS OFF
-)
-
-####################
-# Compile settings #
-####################
+##################
+# Compiler flags #
+##################
 
 # Strip release builds
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 
-# Set debug executable name
-set_target_properties(CuckyVoxel PROPERTIES DEBUG_OUTPUT_NAME "CuckyVoxel_debug")
+# Statically link other libraries
+if(PKG_CONFIG_STATIC_LIBS)
+	target_link_options(CuckyVoxel PRIVATE "-static")
+endif()
 
 # Use LTO if requested
 if(LTO)
@@ -78,10 +73,61 @@ if(LTO)
 	endif()
 endif()
 
-# Statically link other libraries
-if(PKG_CONFIG_STATIC_LIBS)
-	target_link_options(CuckyVoxel PRIVATE "-static")
+########
+# MSVC #
+########
+
+# This is messy as hell, and has been replaced by CMAKE_MSVC_RUNTIME_LIBRARY,
+# but that's a very recent CMake addition, so we're still doing it this way for now
+if(MSVC AND MSVC_LINK_STATIC_RUNTIME)
+	# Statically-link the CRT (vcpkg static libs do this)
+	foreach(flag_var CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+		if(${flag_var} MATCHES "/MD")
+			string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+		endif()
+	endforeach()
 endif()
+
+# Do some other MSVC fixes
+if(MSVC)
+	# Disable warnings that normally fire up on MSVC when using "unsafe" functions instead of using MSVC's "safe" _s functions
+	target_compile_definitions(CuckyVoxel PRIVATE _CRT_SECURE_NO_WARNINGS)
+	
+	# Make it so source files are recognized as UTF-8 by MSVC
+	target_compile_options(CuckyVoxel PRIVATE "/utf-8")
+	
+	# Use `main` instead of `WinMain`
+	set_target_properties(CuckyVoxel PROPERTIES LINK_FLAGS "/ENTRY:mainCRTStartup")
+endif()
+
+##########################
+# Further compiler setup #
+##########################
+
+# Force strict C++17
+set_target_properties(CuckyVoxel PROPERTIES
+	CXX_STANDARD 17
+	CXX_STANDARD_REQUIRED ON
+	CXX_EXTENSIONS OFF
+)
+
+# Set debug executable name
+set_target_properties(CuckyVoxel PROPERTIES DEBUG_OUTPUT_NAME "CuckyVoxel_debug")
+
+# Set output directory
+if(COMPILE_CLIENT)
+	set(BUILD_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin_client")
+else()
+	set(BUILD_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin_server")
+endif()
+
+set_target_properties(CuckyVoxel PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY ${BUILD_DIRECTORY}
+	RUNTIME_OUTPUT_DIRECTORY_RELEASE ${BUILD_DIRECTORY}
+	RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${BUILD_DIRECTORY}
+	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${BUILD_DIRECTORY}
+	RUNTIME_OUTPUT_DIRECTORY_DEBUG ${BUILD_DIRECTORY}
+)
 
 ############################
 # Compile client or server #
@@ -91,9 +137,6 @@ endif()
 find_package(PkgConfig QUIET)
 
 if(COMPILE_CLIENT)
-	# Compile in client directory
-	set(BUILD_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin_client")
-	
 	# Compile client source files
 	target_sources(CuckyVoxel PRIVATE
 		# CuckyVoxel client
@@ -223,42 +266,6 @@ if(COMPILE_CLIENT)
 		target_link_libraries(CuckyVoxel PRIVATE OpenGL::GL)
 	endif()
 else()
-	# Compile in server directory
-	set(BUILD_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin_server")
-endif()
-
-set_target_properties(CuckyVoxel PROPERTIES
-	# Output directory
-	RUNTIME_OUTPUT_DIRECTORY ${BUILD_DIRECTORY}
-	RUNTIME_OUTPUT_DIRECTORY_RELEASE ${BUILD_DIRECTORY}
-	RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${BUILD_DIRECTORY}
-	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${BUILD_DIRECTORY}
-	RUNTIME_OUTPUT_DIRECTORY_DEBUG ${BUILD_DIRECTORY}
-)
-
-########
-# MSVC #
-########
-
-# This is messy as hell, and has been replaced by CMAKE_MSVC_RUNTIME_LIBRARY,
-# but that's a very recent CMake addition, so we're still doing it this way for now
-if(MSVC AND MSVC_LINK_STATIC_RUNTIME)
-	# Statically-link the CRT (vcpkg static libs do this)
-	foreach(flag_var CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
-		if(${flag_var} MATCHES "/MD")
-			string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-		endif()
-	endforeach()
-endif()
-
-# Do some other MSVC fixes
-if(MSVC)
-	# Disable warnings that normally fire up on MSVC when using "unsafe" functions instead of using MSVC's "safe" _s functions
-	target_compile_definitions(CuckyVoxel PRIVATE _CRT_SECURE_NO_WARNINGS)
 	
-	# Make it so source files are recognized as UTF-8 by MSVC
-	target_compile_options(CuckyVoxel PRIVATE "/utf-8")
-	
-	# Use `main` instead of `WinMain`
-	set_target_properties(CuckyVoxel PROPERTIES LINK_FLAGS "/ENTRY:mainCRTStartup")
 endif()
+
