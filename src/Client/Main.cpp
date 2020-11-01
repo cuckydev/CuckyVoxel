@@ -211,6 +211,11 @@ int main(int argc, char *argv[])
 			break;
 	}
 	
+	//Delete created objects
+	delete texture;
+	delete mesh;
+	delete shader;
+	
 	//Delete backend
 	delete backend;
 	

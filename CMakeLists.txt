@@ -59,6 +59,30 @@ set_target_properties(CuckyVoxel PROPERTIES
 	CXX_EXTENSIONS OFF
 )
 
+####################
+# Compile settings #
+####################
+
+# Strip release builds
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
+
+# Set debug executable name
+set_target_properties(CuckyVoxel PROPERTIES DEBUG_OUTPUT_NAME "CuckyVoxel_debug")
+
+# Use LTO if requested
+if(LTO)
+	include(CheckIPOSupported)
+	check_ipo_supported(RESULT result)
+	if(result)
+		set_target_properties(CuckyVoxel PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+	endif()
+endif()
+
+# Statically link other libraries
+if(PKG_CONFIG_STATIC_LIBS)
+	target_link_options(CuckyVoxel PRIVATE "-static")
+endif()
+
 ############################
 # Compile client or server #
 ############################
@@ -203,18 +227,7 @@ else()
 	set(BUILD_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin_server")
 endif()
 
-##########
-# Tweaks #
-##########
-
-# Strip release builds
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
-
-# Set compile settings
 set_target_properties(CuckyVoxel PROPERTIES
-	# Executable name
-	DEBUG_OUTPUT_NAME "CuckyVoxel_debug"
-	
 	# Output directory
 	RUNTIME_OUTPUT_DIRECTORY ${BUILD_DIRECTORY}
 	RUNTIME_OUTPUT_DIRECTORY_RELEASE ${BUILD_DIRECTORY}
@@ -222,20 +235,6 @@ set_target_properties(CuckyVoxel PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${BUILD_DIRECTORY}
 	RUNTIME_OUTPUT_DIRECTORY_DEBUG ${BUILD_DIRECTORY}
 )
-
-# Use LTO if requested
-if(LTO)
-	include(CheckIPOSupported)
-	check_ipo_supported(RESULT result)
-	if(result)
-		set_target_properties(CuckyVoxel PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
-	endif()
-endif()
-
-# Statically link other libraries
-if(PKG_CONFIG_STATIC_LIBS)
-	target_link_options(CuckyVoxel PRIVATE "-static")
-endif()
 
 ########
 # MSVC #
