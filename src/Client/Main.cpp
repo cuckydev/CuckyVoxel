@@ -82,34 +82,49 @@ int main(int argc, char *argv[])
 	//Game state
 	World::World world;
 	
-	//Generate world
-	World::Chunk new_chunk = (world.GetChunkManager())->CreateChunk({0, 0});
-	new_chunk.GenerateTerrain();
-	
-	//Create chunk mesh
-	World::ChunkMeshData mesh_data = new_chunk.GetMeshData();
-	
-	std::vector<Backend::Render::Vertex> vert;
-	for (auto &i : mesh_data.vert)
+	World::Chunk *chunk[8][8];
+	Backend::Render::Mesh *chunk_mesh[8][8];
+	for (int z = 0; z < 8; z++)
 	{
-		vert.push_back({
-			{i.x, i.y, i.z},
-			{0.0f, 0.0f},
-			{0.0f, 0.0f, 0.0f},
-			{i.r, i.g, i.b, 1.0f},
-		});
+		for (int x = 0; x < 8; x++)
+		{
+			//Generate chunk
+			chunk[z][x] = &((world.GetChunkManager())->GenerateChunk({x + 2, z + 4}));
+		}
 	}
 	
-	Backend::Render::Mesh *mesh = render->NewMesh(vert, mesh_data.ind);
-	if (mesh == nullptr)
+	for (int z = 0; z < 8; z++)
 	{
-		std::cout << "Failed to create mesh instance" << std::endl;
-		return 1;
-	}
-	else if (mesh->GetError())
-	{
-		std::cout << "mesh error " << mesh->GetError() << std::endl;
-		return 1;
+		for (int x = 0; x < 8; x++)
+		{
+			//Create chunk mesh
+			World::ChunkMeshData mesh_data = chunk[z][x]->GetMeshData();
+			
+			std::vector<Backend::Render::Vertex> vert;
+			for (auto &i : mesh_data.vert)
+			{
+				vert.push_back({
+					{i.x, i.y, i.z},
+					{0.0f, 0.0f},
+					{0.0f, 0.0f, 0.0f},
+					{i.r, i.g, i.b, 1.0f},
+				});
+			}
+			
+			Backend::Render::Mesh *mesh = render->NewMesh(vert, mesh_data.ind);
+			if (mesh == nullptr)
+			{
+				std::cout << "Failed to create mesh instance" << std::endl;
+				return 1;
+			}
+			else if (mesh->GetError())
+			{
+				std::cout << "mesh error " << mesh->GetError() << std::endl;
+				return 1;
+			}
+			
+			chunk_mesh[z][x] = mesh;
+		}
 	}
 	
 	//Render scene
@@ -117,9 +132,9 @@ int main(int argc, char *argv[])
 	glm::mat4 view;
 	glm::mat4 model;
 	
-	glm::vec3 cam_pos = {120.0f, 120.0f, 120.0f};
+	glm::vec3 cam_pos = {8.0f, 130.0f, 8.0f};
 	float cam_turn = 0.0f;
-	float cam_look = 0.0f;
+	float cam_look = -1.5f;
 	glm::vec3 cam_up = {0.0f, 1.0f,  0.0f};
 	bool w = false, a = false, s = false, d = false;
 	
@@ -192,7 +207,7 @@ int main(int argc, char *argv[])
 			glm::cos(cam_turn) * glm::cos(cam_look),
 		};
 		
-		float cam_speed = 0.75f;
+		float cam_speed = 0.25f;
 		if (w)
 			cam_pos += cam_dir * cam_speed;
 		if (s)
@@ -217,9 +232,15 @@ int main(int argc, char *argv[])
 		view = glm::lookAt(cam_pos, cam_pos + cam_dir, {0.0f, 1.0f, 0.0f});
 		shader->SetUniform("u_view", 1, &(view[0][0]));
 		
-		model = glm::mat4(1.0f);
-		shader->SetUniform("u_model", 1, &(model[0][0]));
-		mesh->Draw();
+		for (int z = 0; z < 8; z++)
+		{
+			for (int x = 0; x < 8; x++)
+			{
+				model = glm::translate(glm::mat4(1.0f), {CHUNK_DIM * x * 1, 0, CHUNK_DIM * z * 1});
+				shader->SetUniform("u_model", 1, &(model[0][0]));
+				chunk_mesh[z][x]->Draw();
+			}
+		}
 		
 		//End frame
 		if (render->EndFrame())
@@ -227,7 +248,9 @@ int main(int argc, char *argv[])
 	}
 	
 	//Delete render objects
-	delete mesh;
+	for (int z = 0; z < 8; z++)
+		for (int x = 0; x < 8; x++)
+			delete chunk_mesh[z][x];
 	delete shader;
 	
 	//Delete backend

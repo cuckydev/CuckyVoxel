@@ -28,7 +28,7 @@ namespace Noise
 	Perlin::Perlin()
 	{
 		//Call initialization with a new random
-		Random temp_random;
+		Random temp_random(RandomTimeSeed());
 		InitCoordAndPermutations(temp_random);
 	}
 	
@@ -62,18 +62,18 @@ namespace Noise
 		const double w = fade(z);
 		
 		//Hash coordinates of the 8 cube corners
-		const int32_t	A = permutations[X    ] + Y,	AA = permutations[A] + Z,	AB = permutations[A + 1] + Z,      
-						B = permutations[X + 1] + Y,	BA = permutations[B] + Z,	BB = permutations[B + 1] + Z;
+		const int32_t A = permutations[X    ] + Y, AA = permutations[A] + Z, AB = permutations[A + 1] + Z,      
+		              B = permutations[X + 1] + Y, BA = permutations[B] + Z, BB = permutations[B + 1] + Z;
 		
 		//And add blended results from 8 corners of cube
-		return	lerp(w,	lerp(v,	lerp(u,	grad3d(permutations[AA    ], x    , y    , z     ),
-										grad3d(permutations[BA    ], x - 1, y    , z     )),
-								lerp(u,	grad3d(permutations[AB    ], x    , y - 1, z     ),
-										grad3d(permutations[BB    ], x - 1, y - 1, z     ))),
-						lerp(v, lerp(u,	grad3d(permutations[AA + 1], x    , y    , z - 1 ),
-										grad3d(permutations[BA + 1], x - 1, y    , z - 1 )),
-								lerp(u,	grad3d(permutations[AB + 1], x    , y - 1, z - 1 ),
-										grad3d(permutations[BB + 1], x - 1, y - 1, z - 1 ))));
+		return lerp(w, lerp(v, lerp(u, grad3d(permutations[AA    ], x    , y    , z     ),
+		                               grad3d(permutations[BA    ], x - 1, y    , z     )),
+		                       lerp(u, grad3d(permutations[AB    ], x    , y - 1, z     ),
+		                               grad3d(permutations[BB    ], x - 1, y - 1, z     ))),
+		               lerp(v, lerp(u, grad3d(permutations[AA + 1], x    , y    , z - 1 ),
+		                               grad3d(permutations[BA + 1], x - 1, y    , z - 1 )),
+		                       lerp(u, grad3d(permutations[AB + 1], x    , y - 1, z - 1 ),
+		                               grad3d(permutations[BB + 1], x - 1, y - 1, z - 1 ))));
 	}
 	
 	//2D noise overload
@@ -86,7 +86,7 @@ namespace Noise
 	void Perlin::Noise(double out[], const double xin, const double yin, const double zin, const int32_t xl, const int32_t yl, const int32_t zl, const double xm, const double ym, const double zm, const double out_div)
 	{
 		double *outp = out;
-		if (yl == 1.0)
+		if (yl == 1)
 		{
 			//2D noise
 			for (int32_t xi = 0; xi < xl; xi++)
@@ -137,40 +137,40 @@ namespace Noise
 				X &= 0xFF; //Wrap integer cell at 255
 				const double u = fade(x); //Compute the fade curve value of X
 				
-				for (int32_t yi = 0; yi < yl; yi++)
+				for (int32_t zi = 0; zi < zl; zi++)
 				{
-					double y = (yin + yi) * ym + y_coord;
+					double z = (zin + zi) * zm + z_coord;
 					
-					int32_t Y = fastfloor(y); //Find unit grid cell containing Y
-					y -= Y; //Get relative Y in cell
-					Y &= 0xFF; //Wrap integer cell at 255
-					const double v = fade(y); //Compute the fade curve value of Y
+					int32_t Z = fastfloor(z); //Find unit grid cell containing Z
+					z -= Z; //Get relative Z in cell
+					Z &= 0xFF; //Wrap integer cell at 255
+					const double v = fade(z); //Compute the fade curve value of Z
 					
-					for (int32_t zi = 0; zi < zl; zi++)
+					for (int32_t yi = 0; yi < yl; yi++)
 					{
-						double z = (zin + zi) * zm + z_coord;
+						double y = (yin + yi) * ym + y_coord;
 						
-						int32_t Z = fastfloor(z); //Find unit grid cell containing Z
-						z -= Z; //Get relative Z in cell
-						Z &= 0xFF; //Wrap integer cell at 255
-						const double w = fade(z); //Compute the fade curve value of Z
+						int32_t Y = fastfloor(y); //Find unit grid cell containing Y
+						y -= Y; //Get relative Y in cell
+						Y &= 0xFF; //Wrap integer cell at 255
+						const double w = fade(y); //Compute the fade curve value of Y
 						
-						if (zi == 0 || Z != n10)
+						if (yi == 0 || Y != n10)
 						{
-							n10 = Z;
+							n10 = Y;
 							
-							const int32_t n20 = permutations[X] + Z;
-							const int32_t n21 = permutations[n20] + Y;
-							const int32_t n22 = permutations[n20 + 1] + Y;
+							const int32_t n20 = permutations[X] + Y;
+							const int32_t n21 = permutations[n20] + Z;
+							const int32_t n22 = permutations[n20 + 1] + Z;
 							
-							const int32_t n23 = permutations[X + 1] + Z;
-							const int32_t n24 = permutations[n23] + Y;
-							const int32_t n25 = permutations[n23 + 1] + Y;
+							const int32_t n23 = permutations[X + 1] + Y;
+							const int32_t n24 = permutations[n23] + Z;
+							const int32_t n25 = permutations[n23 + 1] + Z;
 							
-							lerp6 = lerp(u, grad3d(permutations[n21    ], x, z, y),				grad3d(permutations[n24    ], x - 1.0, z, y));
-							lerp3 = lerp(u, grad3d(permutations[n22    ], x, z - 1.0, y),		grad3d(permutations[n25    ], x - 1.0, z - 1.0, y));
-							lerp7 = lerp(u, grad3d(permutations[n21 + 1], x, z, y - 1.0),		grad3d(permutations[n24 + 1], x - 1.0, z, y - 1.0));
-							lerp4 = lerp(u, grad3d(permutations[n22 + 1], x, z - 1.0, y - 1.0),	grad3d(permutations[n25 + 1], x - 1.0, z - 1.0, y - 1.0));
+							lerp6 = lerp(u, grad3d(permutations[n21    ], x, y,       z),       grad3d(permutations[n24    ], x - 1.0, y,       z));
+							lerp3 = lerp(u, grad3d(permutations[n22    ], x, y - 1.0, z),       grad3d(permutations[n25    ], x - 1.0, y - 1.0, z));
+							lerp7 = lerp(u, grad3d(permutations[n21 + 1], x, y,       z - 1.0), grad3d(permutations[n24 + 1], x - 1.0, y,       z - 1.0));
+							lerp4 = lerp(u, grad3d(permutations[n22 + 1], x, y - 1.0, z - 1.0), grad3d(permutations[n25 + 1], x - 1.0, y - 1.0, z - 1.0));
 						}
 						
 						const double lerp8 = lerp(v, lerp(w, lerp6, lerp3), lerp(w, lerp7, lerp4));

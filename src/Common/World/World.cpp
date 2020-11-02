@@ -10,10 +10,12 @@ namespace World
 	bool World::InitWorld()
 	{
 		//Create chunk manager
-		delete[] chunk_manager;
+		delete chunk_manager;
 		chunk_manager = new ChunkManager(*this);
 		if (chunk_manager == nullptr)
 			return error.Push("Failed to create chunk manager instance");
+		else if (chunk_manager->GetError())
+			return error.Push(chunk_manager->GetError());
 		
 		return false;
 	}

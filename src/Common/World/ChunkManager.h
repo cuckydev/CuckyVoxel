@@ -4,8 +4,10 @@
 #include "WorldDef.h"
 #include "WorldPosition.h"
 #include "Chunk.h"
+#include "ChunkGenerator.h"
 
-#include <Common/Noise/Octaves_Perlin.h>
+#include <Common/Util/Error.h>
+
 #include <Common/Noise/Octaves_Simplex.h>
 
 namespace World
@@ -28,6 +30,9 @@ namespace World
 	class ChunkManager
 	{
 		private:
+			//Error
+			Error error;
+			
 			//Parent world
 			World &parent_world;
 			int64_t seed;
@@ -35,7 +40,10 @@ namespace World
 			//Current chunks
 			ChunkPositionMap<Chunk> chunks;
 			
-			//Noise maps
+			//Chunk generator
+			ChunkGenerator *chunk_generator;
+			
+			//Weather noise
 			Noise::Octaves_Simplex temperature_noise;
 			Noise::Octaves_Simplex humidity_noise;
 			Noise::Octaves_Simplex biome_noise;
@@ -46,13 +54,19 @@ namespace World
 			~ChunkManager();
 			
 			//Chunk generation interface
-			void GetChunkWeather(double temperature[], double humidity[], const ChunkPosition &chunk_pos);
+			void GetChunkWeather(const ChunkPosition &chunk_pos, double temperature[], double humidity[]);
 			
 			//Chunk manager interface
 			Chunk &CreateChunk(const ChunkPosition &chunk_pos);
+			Chunk &GenerateChunk(const ChunkPosition &chunk_pos);
 			void DeleteChunk(const ChunkPosition &chunk_pos);
-			const Chunk &GetChunk(const ChunkPosition &chunk_pos);
+			const Chunk *GetChunk(const ChunkPosition &chunk_pos);
+			
+			Block GetBlock(const BlockPosition &pos);
 			
 			const int64_t &GetSeed() const { return seed; }
+			
+			//Get error
+			const Error &GetError() const { return error; }
 	};
 }

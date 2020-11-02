@@ -46,6 +46,8 @@ add_executable(CuckyVoxel WIN32
 	"src/Common/World/WorldPosition.h"
 	"src/Common/World/ChunkManager.cpp"
 	"src/Common/World/ChunkManager.h"
+	"src/Common/World/ChunkGenerator.cpp"
+	"src/Common/World/ChunkGenerator.h"
 	"src/Common/World/Chunk.cpp"
 	"src/Common/World/Chunk.h"
 )

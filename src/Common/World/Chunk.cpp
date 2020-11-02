@@ -4,13 +4,14 @@
 
 #include <Common/Util/Random.h>
 
+#include <iostream>
+
 namespace World
 {
 	//Constructor and destructor
 	Chunk::Chunk(ChunkManager &_parent_chunk_manager, const ChunkPosition &_pos) : parent_chunk_manager(_parent_chunk_manager), pos(_pos)
 	{
-		//Get chunk generation information
-		parent_chunk_manager.GetChunkWeather(temperature, humidity, pos);
+		return;
 	}
 	
 	Chunk::~Chunk()
@@ -18,36 +19,21 @@ namespace World
 		return;
 	}
 	
-	//Chunk interface
-	void Chunk::GenerateTerrain()
+	//Chunk terrain generation
+	void Chunk::Generate(ChunkGenerator *chunk_generator)
 	{
-		Random random(RandomTimeSeed());
-		
-		for (int y = 0; y < CHUNK_HEIGHT; y++)
-		{
-			for (int x = 0; x < CHUNK_DIM; x++)
-			{
-				for (int z = 0; z < CHUNK_DIM; z++)
-				{
-					float newval = random.NextFloat();
-					float threshold = (float)y / CHUNK_HEIGHT;
-					if (newval >= threshold)
-						blocks[y][z][x] = BlockId_Stone;
-					else
-						blocks[y][z][x] = BlockId_Air;
-				}
-			}
-		}
+		chunk_generator->GenerateTerrain(pos, &(blocks[0][0][0]));
 	}
 	
-	Block Chunk::GetBlock(const BlockPosition &block_pos)
+	//Chunk interface
+	Block Chunk::GetBlock(const BlockPosition &block_pos) const
 	{
 		if (block_pos.y >= 0 && block_pos.y < CHUNK_HEIGHT)
 		{
 			if (block_pos.x >= 0 && block_pos.x < CHUNK_DIM && block_pos.z >= 0 && block_pos.z < CHUNK_DIM)
 				return blocks[block_pos.y][block_pos.z][block_pos.x];
-			//else
-			//	return parent_chunk_manager.GetBlock(block_pos);
+			else
+				return parent_chunk_manager.GetBlock(LocalToWorldBlockPosition(pos, block_pos));
 		}
 		return BlockId_Air;
 	}
@@ -96,8 +82,6 @@ namespace World
 	
 	ChunkMeshData Chunk::GetMeshData()
 	{
-		Random random(RandomTimeSeed());
-		
 		//Faces
 		const ChunkMeshFace front_face =  {{1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1}, 0.8f};
 		const ChunkMeshFace right_face =  {{1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0}, 0.45f};

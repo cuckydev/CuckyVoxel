@@ -9,8 +9,8 @@ namespace Noise
 	{
 		private:
 			//Simplex octaves
-			Simplex *octave = nullptr;
-			int32_t octaves;
+			Simplex **octave = nullptr;
+			int32_t octaves = 0;
 			
 		public:
 			//Constructor and destructor

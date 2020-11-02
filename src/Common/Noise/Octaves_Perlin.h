@@ -8,18 +8,20 @@ namespace Noise
 	class Octaves_Perlin
 	{
 		private:
-			//Simplex octaves
-			Perlin *octave = nullptr;
-			int32_t octaves;
+			//Perlin octaves
+			Perlin **octave = nullptr;
+			int32_t octaves = 0;
 			
 		public:
 			//Constructor and destructor
 			Octaves_Perlin();
 			Octaves_Perlin(Random &random, int32_t set_octaves);
+			Octaves_Perlin(int64_t seed, int32_t set_octaves);
 			~Octaves_Perlin();
 			
 			//Octaves perlin interface
 			bool SetOctaves(Random &random, int32_t set_octaves);
+			bool SetOctaves(int64_t seed, int32_t set_octaves);
 			
 			//2D point noise
 			double Noise(const double x, const double y);

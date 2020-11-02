@@ -14,10 +14,21 @@ namespace Noise
 		SetOctaves(random, set_octaves);
 	}
 	
+	Octaves_Perlin::Octaves_Perlin(int64_t seed, int32_t set_octaves)
+	{
+		//Set octaves
+		SetOctaves(seed, set_octaves);
+	}
+	
 	Octaves_Perlin::~Octaves_Perlin()
 	{
 		//Delete octaves
-		delete[] octave;
+		if (octave != nullptr)
+		{
+			for (int32_t i = 0; i < octaves; i++)
+				delete octave[i];
+			delete[] octave;
+		}
 	}
 	
 	//Octaves perlin interface
@@ -25,11 +36,25 @@ namespace Noise
 	{
 		//Set octaves
 		octaves = set_octaves;
-		
 		delete[] octave;
-		octave = new Perlin[set_octaves]{random};
 		
-		return octave != nullptr;
+		octave = new Perlin*[set_octaves]{};
+		if (octave == nullptr)
+			return false;
+		
+		for (int32_t i = 0; i < set_octaves; i++)
+		{
+			octave[i] = new Perlin(random);
+			if (octave[i] == nullptr)
+				return false;
+		}
+		return true;
+	}
+	
+	bool Octaves_Perlin::SetOctaves(int64_t seed, int32_t set_octaves)
+	{
+		Random random(seed);
+		return SetOctaves(random, set_octaves);
 	}
 	
 	//2D point noise
@@ -39,7 +64,7 @@ namespace Noise
 		double factor = 1.0;
 		for (int32_t i = 0; i < octaves; i++)
 		{
-			total += octave[i].Noise(x * factor, y * factor) / factor;
+			total += octave[i]->Noise(x * factor, y * factor) / factor;
 			factor /= 2.0;
 		}
 		return total;
@@ -51,7 +76,7 @@ namespace Noise
 		double factor = 1.0;
 		for (int32_t j = 0; j < octaves; j++)
 		{
-			octave[j].Noise(out, xin, yin, zin, xl, yl, zl, xm * factor, ym * factor, zm * factor, factor);
+			octave[j]->Noise(out, xin, yin, zin, xl, yl, zl, xm * factor, ym * factor, zm * factor, factor);
 			factor /= 2.0;
 		}
 	}

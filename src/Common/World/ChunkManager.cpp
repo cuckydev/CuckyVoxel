@@ -1,6 +1,8 @@
 #include "ChunkManager.h"
 #include "World.h"
 
+#include <iostream>
+
 namespace World
 {
 	//Constructor and destructor
@@ -9,7 +11,15 @@ namespace World
 		//Use parent world information
 		seed = parent_world.GetSeed();
 		
-		//Initialize noise
+		//Create chunk generator
+		chunk_generator = new ChunkGenerator(*this);
+		if (chunk_generator == nullptr)
+		{
+			error.Push("Failed to create chunk manager instance");
+			return;
+		}
+		
+		//Initialize weather noise
 		temperature_noise.SetOctaves(seed * 9871, 4);
 		humidity_noise.SetOctaves(seed * 398811, 4);
 		biome_noise.SetOctaves(seed * 543321, 2);
@@ -17,19 +27,20 @@ namespace World
 	
 	ChunkManager::~ChunkManager()
 	{
-		
+		//Delete chunk generator
+		delete chunk_generator;
 	}
 	
 	//Chunk generation interface
-	void ChunkManager::GetChunkWeather(double temperature[], double humidity[], const ChunkPosition &chunk_pos)
+	void ChunkManager::GetChunkWeather(const ChunkPosition &chunk_pos, double temperature[], double humidity[])
 	{
 		//Get temperature and humidity noise
 		temperature_noise.Noise(temperature, chunk_pos.x * CHUNK_DIM, chunk_pos.z * CHUNK_DIM, CHUNK_DIM, CHUNK_DIM, 0.025, 0.025, 0.25);
 		humidity_noise.Noise(humidity,       chunk_pos.x * CHUNK_DIM, chunk_pos.z * CHUNK_DIM, CHUNK_DIM, CHUNK_DIM, 0.05,  0.05,  0.3333333333333333);
 		
 		//Get biome noise
-		double biome[CHUNK_DIM * CHUNK_DIM];
-		biome_noise.Noise(biome, chunk_pos.x * CHUNK_DIM, chunk_pos.z * CHUNK_DIM, CHUNK_DIM, CHUNK_DIM, 0.25,  0.25,  0.5882352941176471);
+		double biome[CHUNK_DIM * CHUNK_DIM] = {};
+		biome_noise.Noise(biome, chunk_pos.x * CHUNK_DIM, chunk_pos.z * CHUNK_DIM, CHUNK_DIM, CHUNK_DIM, 0.25, 0.25, 0.5882352941176471);
 		
 		//Calculate final temperature and noise based off biome noise
 		double *tempp = temperature, *humidp = humidity, *biomep = biome;
@@ -71,21 +82,39 @@ namespace World
 		return pos->second;
 	}
 	
+	Chunk &ChunkManager::GenerateChunk(const ChunkPosition &chunk_pos)
+	{
+		//Allocate a new chunk at the given position
+		auto pos = chunks.find(chunk_pos);
+		if (pos == chunks.cend())
+		{
+			Chunk &chunk = chunks.emplace(std::piecewise_construct, std::forward_as_tuple(chunk_pos), std::forward_as_tuple(*this, chunk_pos)).first->second;
+			chunk.Generate(chunk_generator);
+			return chunk;
+		}
+		return pos->second;
+	}
+	
 	void ChunkManager::DeleteChunk(const ChunkPosition &chunk_pos)
 	{
 		//Delete chunk at the given position
 		chunks.erase(chunk_pos);
 	}
 	
-	const Chunk &ChunkManager::GetChunk(const ChunkPosition &chunk_pos)
+	const Chunk *ChunkManager::GetChunk(const ChunkPosition &chunk_pos)
 	{
 		//Return chunk at given position or empty placeholder
 		auto pos = chunks.find(chunk_pos);
 		if (pos == chunks.cend())
-		{
-			static Chunk placeholder_chunk(*this, {0, 0});
-			return placeholder_chunk;
-		}
-		return pos->second;
+			return nullptr;
+		return &pos->second;
+	}
+	
+	Block ChunkManager::GetBlock(const BlockPosition &pos)
+	{
+		const Chunk *containing_chunk = GetChunk(BlockToChunkPosition(pos));
+		if (containing_chunk == nullptr)
+			return BlockId_Air;
+		return containing_chunk->GetBlock(WorldToLocalBlockPosition(pos));
 	}
 }

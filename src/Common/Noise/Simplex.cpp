@@ -13,6 +13,7 @@ namespace Noise
 		//Initialize coords
 		x_coord = random.NextDouble() * 256.0;
 		y_coord = random.NextDouble() * 256.0;
+		random.NextDouble(); //z_coord
 		
 		//Initialize permutation array
 		for (int32_t i = 0; i < 256; i++)
@@ -32,7 +33,7 @@ namespace Noise
 	Simplex::Simplex()
 	{
 		//Call initialization with a new random
-		Random tempRandom;
+		Random tempRandom(RandomTimeSeed());
 		InitCoordAndPermutations(tempRandom);
 	}
 	
@@ -66,8 +67,16 @@ namespace Noise
 				//For the 2D case, the simplex shape is an equilateral triangle.
 				//Determine which simplex we are in.
 				int32_t i1, j1; //Offsets for second (middle) corner of simplex in (i,j) coords
-				if (x0 > y0)	{ i1 = 1; j1 = 0; }
-				else			{ i1 = 0; j1 = 1; }
+				if (x0 > y0)
+				{
+					i1 = 1;
+					j1 = 0;
+				}
+				else
+				{
+					i1 = 0;
+					j1 = 1;
+				}
 				
 				//A step of (1,0) in (i,j) means a step of (1-c,-c) in (x,y), and
 				//a step of (0,1) in (i,j) means a step of (-c,1-c) in (x,y), where
@@ -80,9 +89,9 @@ namespace Noise
 				//Work out the hashed gradient indices of the three simplex corners
 				const int32_t ii = i & 0xFF;
 				const int32_t jj = j & 0xFF;
-				const int32_t gi0 = permutations[ii +		permutations[jj]]		% 12;
-				const int32_t gi1 = permutations[ii + i1 +	permutations[jj + j1]]	% 12;
-				const int32_t gi2 = permutations[ii + 1 +	permutations[jj + 1]]	% 12;
+				const int32_t gi0 = permutations[ii +      permutations[jj]]      % 12;
+				const int32_t gi1 = permutations[ii + i1 + permutations[jj + j1]] % 12;
+				const int32_t gi2 = permutations[ii + 1 +  permutations[jj + 1]]  % 12;
 				
 				//Calculate the contribution from the three corners
 				double n0, n1, n2; //Noise contributions from the three corners

@@ -23,7 +23,12 @@ namespace Noise
 	Octaves_Simplex::~Octaves_Simplex()
 	{
 		//Delete octaves
-		delete[] octave;
+		if (octave != nullptr)
+		{
+			for (int32_t i = 0; i < octaves; i++)
+				delete octave[i];
+			delete[] octave;
+		}
 	}
 	
 	//Octaves simplex interface
@@ -33,19 +38,23 @@ namespace Noise
 		octaves = set_octaves;
 		delete[] octave;
 		
-		octave = new Simplex[set_octaves]{random};
-		return octave != nullptr;
+		octave = new Simplex*[set_octaves]{};
+		if (octave == nullptr)
+			return false;
+		
+		for (int32_t i = 0; i < set_octaves; i++)
+		{
+			octave[i] = new Simplex(random);
+			if (octave[i] == nullptr)
+				return false;
+		}
+		return true;
 	}
 	
 	bool Octaves_Simplex::SetOctaves(int64_t seed, int32_t set_octaves)
 	{
-		//Set octaves
-		octaves = set_octaves;
-		delete[] octave;
-		
 		Random random(seed);
-		octave = new Simplex[set_octaves]{random};
-		return octave != nullptr;
+		return SetOctaves(random, set_octaves);
 	}
 	
 	//2D area noise, outMult set to 0.5
@@ -64,7 +73,7 @@ namespace Noise
 		double out_factor = 1.0;
 		for (int32_t j = 0; j < octaves; j++)
 		{
-			octave[j].Noise(out, xin, yin, xl, yl, xm * move_factor, ym * move_factor, 0.55 / out_factor);
+			octave[j]->Noise(out, xin, yin, xl, yl, xm * move_factor, ym * move_factor, 0.55 / out_factor);
 			move_factor *= move_mult;
 			out_factor *= out_mult;
 		}

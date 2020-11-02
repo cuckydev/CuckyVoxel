@@ -2,6 +2,7 @@
 #include <vector>
 #include "WorldDef.h"
 #include "WorldPosition.h"
+#include "ChunkGenerator.h"
 
 namespace World
 {
@@ -28,10 +29,6 @@ namespace World
 			ChunkManager &parent_chunk_manager;
 			ChunkPosition pos;
 			
-			//Chunk generation data
-			double temperature[CHUNK_DIM * CHUNK_DIM];
-			double humidity[CHUNK_DIM * CHUNK_DIM];
-			
 			//Chunk block data
 			Block blocks[CHUNK_HEIGHT][CHUNK_DIM][CHUNK_DIM] = { BlockId_Air };
 			
@@ -41,9 +38,9 @@ namespace World
 			~Chunk();
 			
 			//Chunk interface
-			void GenerateTerrain();
+			void Generate(ChunkGenerator *chunk_generator);
 			
-			Block GetBlock(const BlockPosition &block_pos);
+			Block GetBlock(const BlockPosition &block_pos) const;
 			void SetBlock(const BlockPosition &block_pos, Block block);
 			
 			ChunkMeshData GetMeshData();
