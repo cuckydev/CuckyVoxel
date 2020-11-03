@@ -2,11 +2,8 @@
 #include <iostream>
 
 #include "Backend/Backend.h"
-#include "Backend/ShaderFile.h"
-#include "Texture.h"
 
 #include "World/World.h"
-
 #include <Common/World/WorldPosition.h>
 
 #include <glm/mat4x4.hpp>
@@ -64,11 +61,11 @@ int main(int argc, char *argv[])
 	World::World world(render);
 	
 	//Render scene (all this code is temporary)
-	glm::dvec3 cam_pos = {8.0, 70.0, 8.0};
-	double cam_turn = 0.0;
-	double cam_look = -1.5;
+	glm::dvec3 cam_pos = {8.0, 65.62, 8.0};
+	double cam_turn = glm::radians(-119.23);
+	double cam_look = glm::radians(8.297);
 	glm::dvec3 cam_up = {0.0, 1.0,  0.0};
-	bool w = false, a = false, s = false, d = false, e = false;
+	bool w = false, a = false, s = false, d = false;
 	
 	while (1)
 	{
@@ -101,7 +98,10 @@ int main(int argc, char *argv[])
 									d = event_data.input_bool.value;
 									break;
 								case Backend::Event::InputCode_E:
-									e = event_data.input_bool.value;
+									if (event_data.input_bool.value)
+										render->UnlockMouse();
+									else
+										render->LockMouse();
 									break;
 							}
 							break;

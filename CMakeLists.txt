@@ -149,8 +149,8 @@ if(COMPILE_CLIENT)
 		# CuckyVoxel client
 		"src/Client/Main.cpp"
 		"src/Client/Main.h"
-		"src/Client/Texture.cpp"
-		"src/Client/Texture.h"
+		"src/Client/TextureData.cpp"
+		"src/Client/TextureData.h"
 		"src/Client/World/World.cpp"
 		"src/Client/World/World.h"
 		"src/Client/World/ChunkMesh.cpp"

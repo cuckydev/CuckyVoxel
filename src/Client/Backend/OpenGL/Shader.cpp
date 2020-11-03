@@ -28,6 +28,7 @@ namespace Backend
 				glGetShaderInfoLog(id, log_length, nullptr, info_log.data());
 				return error.Push(info_log);
 			}
+			
 			return false;
 		}
 		
@@ -44,6 +45,7 @@ namespace Backend
 			glAttachShader(program_id, vertex_id);
 			glAttachShader(program_id, fragment_id);
 			glLinkProgram(program_id);
+			glValidateProgram(program_id);
 			glDetachShader(program_id, vertex_id);
 			glDetachShader(program_id, fragment_id);
 			
@@ -57,6 +59,7 @@ namespace Backend
 				glGetProgramInfoLog(program_id, log_length, nullptr, info_log.data());
 				return error.Push(info_log);
 			}
+			
 			return false;
 		}
 		

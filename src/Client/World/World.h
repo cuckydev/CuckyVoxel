@@ -65,8 +65,10 @@ namespace World
 			ChunkPositionMap<ChunkMesh> chunk_meshes;
 			ChunkPositionMap<bool> chunk_mesh_updates;
 			
-			//Renderer
+			//Render objects
 			Backend::Render::Render *render;
+			
+			Backend::Render::Texture *terrain_texture = nullptr;
 			Backend::Render::Shader *generic_shader = nullptr;
 			
 		private:

@@ -2,6 +2,8 @@
 #include "../Main.h"
 #include <Common/Util/Random.h>
 
+#include "../TextureData.h"
+
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -13,8 +15,19 @@ namespace World
 	//Internal interface
 	bool World::InitWorld()
 	{
+		//Load terrain texture
+		TextureData terrain_texture_data(executable_dir + "Data/World/Terrain.png");
+		if (terrain_texture_data.GetError())
+			return error.Push(terrain_texture_data.GetError());
+		
+		terrain_texture = render->NewTexture(terrain_texture_data.data, terrain_texture_data.width, terrain_texture_data.height);
+		if (terrain_texture == nullptr)
+			return error.Push("Failed to create terrain texture instance");
+		else if (terrain_texture->GetError())
+			return error.Push(terrain_texture->GetError());
+		
 		//Shader for world rendering
-		Backend::Render::ShaderFile generic_shader_file(executable_dir + "Data/Shader/Generic.shd");
+		Backend::Render::ShaderFile generic_shader_file(executable_dir + "Data/Shader/GenericTexture.shd");
 		if (generic_shader_file.GetError())
 			return error.Push(generic_shader_file.GetError());
 		
@@ -142,6 +155,10 @@ namespace World
 			delete meshthread;
 		}
 		
+		//Delete textures and shaders
+		delete terrain_texture;
+		delete generic_shader;
+		
 		//Delete chunk manager
 		delete chunk_manager;
 	}
@@ -183,6 +200,8 @@ namespace World
 				{
 					//Queue chunk
 					const ChunkPosition chunk_pos{cam_chunk.x + x, cam_chunk.z + z};
+					if (genthread_in.size() >= 8)
+						break;
 					if (!chunk_manager->HasChunk(chunk_pos))
 						genthread_in.push_back(chunk_pos);
 				}
@@ -293,6 +312,8 @@ namespace World
 		generic_shader->SetUniform("u_view", 1, &(view[0][0]));
 		
 		//Render chunk meshes
+		terrain_texture->Bind();
+		
 		for(auto it = chunk_meshes.begin(); it != chunk_meshes.end(); it++)
 		{
 			//Get model position

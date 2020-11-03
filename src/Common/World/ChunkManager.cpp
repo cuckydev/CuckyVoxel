@@ -26,7 +26,7 @@ namespace World
 	}
 	
 	//Chunk generation interface
-	void ChunkManager::GetChunkWeather(const ChunkPosition &chunk_pos, double temperature[], double humidity[])
+	void ChunkManager::GetChunkBiome(const ChunkPosition &chunk_pos, double temperature[], double humidity[])
 	{
 		//Get temperature and humidity noise
 		temperature_noise.Noise(temperature, chunk_pos.x * CHUNK_DIM, chunk_pos.z * CHUNK_DIM, CHUNK_DIM, CHUNK_DIM, 0.025, 0.025, 0.25);
@@ -38,9 +38,9 @@ namespace World
 		
 		//Calculate final temperature and noise based off biome noise
 		double *tempp = temperature, *humidp = humidity, *biomep = biome;
-		for (int z = 0; z < CHUNK_DIM; z++)
+		for (int x = 0; x < CHUNK_DIM; x++)
 		{
-			for (int x = 0; x < CHUNK_DIM; x++)
+			for (int z = 0; z < CHUNK_DIM; z++)
 			{
 				//Get biome factor
 				const double biome_factor = *biomep * 1.1 + 0.5;

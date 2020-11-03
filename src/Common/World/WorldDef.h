@@ -9,10 +9,25 @@
 namespace World
 {
 	//World types
+	enum BlockFace
+	{
+		BlockFace_Front,
+		BlockFace_Right,
+		BlockFace_Back,
+		BlockFace_Left,
+		BlockFace_Top,
+		BlockFace_Bottom,
+	};
+	
 	enum BlockId
 	{
 		BlockId_Air,
 		BlockId_Stone,
+		BlockId_Grass,
+		BlockId_Dirt,
+		BlockId_Sand,
+		BlockId_Gravel,
+		BlockId_Num,
 	};
 	
 	typedef uint8_t Block;

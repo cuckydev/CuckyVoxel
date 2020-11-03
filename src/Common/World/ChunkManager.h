@@ -55,7 +55,7 @@ namespace World
 			~ChunkManager();
 			
 			//Chunk generation interface
-			void GetChunkWeather(const ChunkPosition &chunk_pos, double temperature[], double humidity[]);
+			void GetChunkBiome(const ChunkPosition &chunk_pos, double temperature[], double humidity[]);
 			
 			//Chunk interface
 			bool HasChunk(const ChunkPosition &chunk_pos) const;

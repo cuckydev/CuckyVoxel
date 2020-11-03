@@ -12,7 +12,9 @@ namespace World
 	struct ChunkVertex
 	{
 		float x, y, z;
-		float r, g, b;
+		int u, v;
+		BlockId block;
+		BlockFace face;
 	};
 	
 	struct ChunkMeshData

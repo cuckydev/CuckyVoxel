@@ -3,6 +3,7 @@
 #include "WorldPosition.h"
 
 #include <Common/Noise/Octaves_Perlin.h>
+#include <Common/Util/Random.h>
 
 namespace World
 {
@@ -16,7 +17,9 @@ namespace World
 			ChunkManager &parent_chunk_manager;
 			int64_t seed;
 			
-			//Terrain noise
+			//Random and noise
+			Random random;
+			
 			Noise::Octaves_Perlin field_912_k;
 			Noise::Octaves_Perlin field_911_l;
 			Noise::Octaves_Perlin field_910_m;
@@ -30,6 +33,8 @@ namespace World
 		private:
 			//Internal interface
 			void InitializeNoiseField(double out[], int x, int y, int z, double temperature[], double humidity[]);
+			void GenerateTerrain(const ChunkPosition &pos, Block blocks[], double temperature[], double humidity[]);
+			void GenerateSurface(const ChunkPosition &pos, Block blocks[]);
 			
 		public:
 			//Constructor and destructor
