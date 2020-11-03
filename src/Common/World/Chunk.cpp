@@ -1,10 +1,7 @@
 #include "Chunk.h"
-#include "World.h"
 #include "ChunkManager.h"
 
 #include <Common/Util/Random.h>
-
-#include <iostream>
 
 namespace World
 {
@@ -26,21 +23,37 @@ namespace World
 	}
 	
 	//Chunk interface
-	Block Chunk::GetBlock(const BlockPosition &block_pos) const
+	BlockId Chunk::GetBlock(const BlockPosition &block_pos) const
 	{
 		if (block_pos.y >= 0 && block_pos.y < CHUNK_HEIGHT)
 		{
 			if (block_pos.x >= 0 && block_pos.x < CHUNK_DIM && block_pos.z >= 0 && block_pos.z < CHUNK_DIM)
-				return blocks[block_pos.y][block_pos.z][block_pos.x];
+				return (BlockId)blocks[block_pos.y][block_pos.z][block_pos.x];
 			else
 				return parent_chunk_manager.GetBlock(LocalToWorldBlockPosition(pos, block_pos));
 		}
 		return BlockId_Air;
 	}
 	
-	void Chunk::SetBlock(const BlockPosition &block_pos, Block block)
+	void Chunk::SetBlock(const BlockPosition &block_pos, BlockId block)
 	{
-		
+		if (block_pos.y >= 0 && block_pos.y < CHUNK_HEIGHT)
+		{
+			if (block_pos.x >= 0 && block_pos.x < CHUNK_DIM && block_pos.z >= 0 && block_pos.z < CHUNK_DIM)
+				blocks[block_pos.y][block_pos.z][block_pos.x] = block;
+			else
+				parent_chunk_manager.SetBlock(LocalToWorldBlockPosition(pos, block_pos), block);
+		}
+	}
+	
+	BlockId Chunk::GetBlockImmediate(const BlockPosition &block_pos) const
+	{
+		return (BlockId)blocks[block_pos.y][block_pos.z][block_pos.x];
+	}
+	
+	void Chunk::SetBlockImmediate(const BlockPosition &block_pos, BlockId block)
+	{
+		blocks[block_pos.y][block_pos.z][block_pos.x] = block;
 	}
 	
 	//Mesh generation
@@ -49,12 +62,6 @@ namespace World
 		float vertices[12];
 		float light;
 	};
-	
-	inline bool DoMakeFace(Chunk &chunk, const BlockPosition &chk_pos)
-	{
-		Block block = chunk.GetBlock(chk_pos);
-		return block == BlockId_Air;
-	}
 	
 	inline void MakeFace(ChunkMeshData &data, int &ind_i, const ChunkMeshFace &face, const BlockPosition &pos)
 	{
@@ -80,44 +87,85 @@ namespace World
 		ind_i += 4;
 	}
 	
+	inline bool DoMakeFace(BlockId block)
+	{
+		return block == BlockId_Air;
+	}
+	
+	inline bool DoMakeFace_ChunkEdge(Chunk *chunk, const BlockPosition &pos)
+	{
+		if (chunk == nullptr)
+			return false;
+		return DoMakeFace(chunk->GetBlockImmediate(pos));
+	}
+	
 	ChunkMeshData Chunk::GetMeshData()
 	{
 		//Faces
 		const ChunkMeshFace front_face =  {{1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1}, 0.8f};
-		const ChunkMeshFace right_face =  {{1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0}, 0.45f};
+		const ChunkMeshFace right_face =  {{1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0}, 0.6f};
 		const ChunkMeshFace back_face =   {{0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0}, 0.8f};
-		const ChunkMeshFace left_face =   {{0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1}, 0.45f};
+		const ChunkMeshFace left_face =   {{0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1}, 0.6f};
 		const ChunkMeshFace top_face =    {{1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1}, 1.0f};
-		const ChunkMeshFace bottom_face = {{0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1}, 0.25f};
+		const ChunkMeshFace bottom_face = {{0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1}, 0.5f};
+		
+		//Get neighbouring chunks
+		Chunk *front_chunk = parent_chunk_manager.GetChunk({pos.x + 0, pos.z + 1});
+		Chunk *right_chunk = parent_chunk_manager.GetChunk({pos.x + 1, pos.z + 0});
+		Chunk *back_chunk = parent_chunk_manager.GetChunk({pos.x + 0, pos.z - 1});
+		Chunk *left_chunk = parent_chunk_manager.GetChunk({pos.x - 1, pos.z + 0});
 		
 		//Mesh data
 		ChunkMeshData data;
 		int ind_i = 0;
 		
 		//Generate mesh data
+		Block *blockp = &(blocks[0][0][0]);
 		for (int y = 0; y < CHUNK_HEIGHT; y++)
 		{
-			for (int x = 0; x < CHUNK_DIM; x++)
+			for (int z = 0; z < CHUNK_DIM; z++)
 			{
-				for (int z = 0; z < CHUNK_DIM; z++)
+				for (int x = 0; x < CHUNK_DIM; x++)
 				{
+					//Get block at position
 					const BlockPosition pos{x, y, z};
-					bool block = blocks[y][z][x] != BlockId_Air;
+					bool block = *blockp;
+					
+					//Process block
 					if (block)
 					{
-						if (DoMakeFace(*this, {x, y, z + 1}))
+						//Front
+						if ((z == (CHUNK_DIM - 1)) ?
+							(DoMakeFace_ChunkEdge(front_chunk, {x, y, 0})) :
+							(DoMakeFace((BlockId)*(blockp + CHUNK_DIM))))
 							MakeFace(data, ind_i, front_face, pos);
-						if (DoMakeFace(*this, {x + 1, y, z}))
-							MakeFace(data, ind_i, right_face, pos);
-						if (DoMakeFace(*this, {x, y, z - 1}))
+						//Back
+						if ((z == 0) ?
+							(DoMakeFace_ChunkEdge(back_chunk, {x, y, CHUNK_DIM - 1})) :
+							(DoMakeFace((BlockId)*(blockp - CHUNK_DIM))))
 							MakeFace(data, ind_i, back_face, pos);
-						if (DoMakeFace(*this, {x - 1, y, z}))
+						//Right
+						if ((x == (CHUNK_DIM - 1)) ?
+							(DoMakeFace_ChunkEdge(right_chunk, {0, y, z})) :
+							(DoMakeFace((BlockId)*(blockp + 1))))
+							MakeFace(data, ind_i, right_face, pos);
+						//Left
+						if ((x == 0) ?
+							(DoMakeFace_ChunkEdge(left_chunk, {CHUNK_DIM - 1, y, z})) :
+							(DoMakeFace((BlockId)*(blockp - 1))))
 							MakeFace(data, ind_i, left_face, pos);
-						if (DoMakeFace(*this, {x, y + 1, z}))
+						//Top
+						if ((y == (CHUNK_HEIGHT - 1)) ||
+							(DoMakeFace((BlockId)*(blockp + (CHUNK_DIM * CHUNK_DIM)))))
 							MakeFace(data, ind_i, top_face, pos);
-						if (DoMakeFace(*this, {x, y - 1, z}))
+						//Bottom
+						if ((y == 0) ||
+							(DoMakeFace((BlockId)*(blockp - (CHUNK_DIM * CHUNK_DIM)))))
 							MakeFace(data, ind_i, bottom_face, pos);
 					}
+					
+					//Check next block
+					blockp++;
 				}
 			}
 		}

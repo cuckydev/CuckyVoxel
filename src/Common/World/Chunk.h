@@ -40,8 +40,11 @@ namespace World
 			//Chunk interface
 			void Generate(ChunkGenerator *chunk_generator);
 			
-			Block GetBlock(const BlockPosition &block_pos) const;
-			void SetBlock(const BlockPosition &block_pos, Block block);
+			BlockId GetBlock(const BlockPosition &block_pos) const;
+			void SetBlock(const BlockPosition &block_pos, BlockId block);
+			
+			BlockId GetBlockImmediate(const BlockPosition &block_pos) const;
+			void SetBlockImmediate(const BlockPosition &block_pos, BlockId block);
 			
 			ChunkMeshData GetMeshData();
 	};

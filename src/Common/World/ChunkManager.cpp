@@ -1,16 +1,10 @@
 #include "ChunkManager.h"
-#include "World.h"
-
-#include <iostream>
 
 namespace World
 {
 	//Constructor and destructor
-	ChunkManager::ChunkManager(World &_parent_world) : parent_world(_parent_world)
+	ChunkManager::ChunkManager(int64_t _seed) : seed(_seed)
 	{
-		//Use parent world information
-		seed = parent_world.GetSeed();
-		
 		//Create chunk generator
 		chunk_generator = new ChunkGenerator(*this);
 		if (chunk_generator == nullptr)
@@ -73,25 +67,28 @@ namespace World
 	}
 	
 	//Chunk manager interface
-	Chunk &ChunkManager::CreateChunk(const ChunkPosition &chunk_pos)
+	bool ChunkManager::HasChunk(const ChunkPosition &chunk_pos) const
 	{
-		//Allocate a new chunk at the given position
-		auto pos = chunks.find(chunk_pos);
-		if (pos == chunks.cend())
-			return chunks.emplace(std::piecewise_construct, std::forward_as_tuple(chunk_pos), std::forward_as_tuple(*this, chunk_pos)).first->second;
-		return pos->second;
+		return chunks.find(chunk_pos) != chunks.cend();
 	}
 	
-	Chunk &ChunkManager::GenerateChunk(const ChunkPosition &chunk_pos)
+	Chunk *ChunkManager::GetChunk(const ChunkPosition &chunk_pos)
+	{
+		//Return chunk at given position or empty placeholder
+		auto pos = chunks.find(chunk_pos);
+		if (pos == chunks.cend())
+			return nullptr;
+		return &pos->second;
+	}
+	
+	Chunk &ChunkManager::AddChunk(const ChunkPosition &chunk_pos)
 	{
 		//Allocate a new chunk at the given position
 		auto pos = chunks.find(chunk_pos);
 		if (pos == chunks.cend())
-		{
-			Chunk &chunk = chunks.emplace(std::piecewise_construct, std::forward_as_tuple(chunk_pos), std::forward_as_tuple(*this, chunk_pos)).first->second;
-			chunk.Generate(chunk_generator);
-			return chunk;
-		}
+			return chunks.emplace(std::piecewise_construct,
+			                      std::forward_as_tuple(chunk_pos),
+			                      std::forward_as_tuple(*this, chunk_pos)).first->second;
 		return pos->second;
 	}
 	
@@ -101,20 +98,44 @@ namespace World
 		chunks.erase(chunk_pos);
 	}
 	
-	const Chunk *ChunkManager::GetChunk(const ChunkPosition &chunk_pos)
+	Chunk &ChunkManager::GenerateChunk(const ChunkPosition &chunk_pos)
 	{
-		//Return chunk at given position or empty placeholder
-		auto pos = chunks.find(chunk_pos);
-		if (pos == chunks.cend())
-			return nullptr;
-		return &pos->second;
+		Chunk &chunk = AddChunk(chunk_pos);
+		chunk.Generate(chunk_generator);
+		return chunk;
 	}
 	
-	Block ChunkManager::GetBlock(const BlockPosition &pos)
+	bool ChunkManager::HasNeighbours(const ChunkPosition &chunk_pos) const
 	{
-		const Chunk *containing_chunk = GetChunk(BlockToChunkPosition(pos));
+		return HasChunk({chunk_pos.x + 0, chunk_pos.z + 0}) &&
+		       HasChunk({chunk_pos.x + 1, chunk_pos.z + 0}) && //+X
+		       HasChunk({chunk_pos.x + 0, chunk_pos.z + 1}) && //+Z
+		       HasChunk({chunk_pos.x - 1, chunk_pos.z + 0}) && //-X
+		       HasChunk({chunk_pos.x + 0, chunk_pos.z - 1});   //-Z
+	}
+	
+	void ChunkManager::AddNeighbours(const ChunkPosition &chunk_pos)
+	{
+		AddChunk({chunk_pos.x + 0, chunk_pos.z + 0});
+		AddChunk({chunk_pos.x + 1, chunk_pos.z + 0}); //+X
+		AddChunk({chunk_pos.x + 0, chunk_pos.z + 1}); //+Z
+		AddChunk({chunk_pos.x - 1, chunk_pos.z + 0}); //-X
+		AddChunk({chunk_pos.x + 0, chunk_pos.z - 1}); //-Z
+	}
+	
+	//Block interface
+	BlockId ChunkManager::GetBlock(const BlockPosition &pos)
+	{
+		Chunk *containing_chunk = GetChunk(BlockToChunkPosition(pos));
 		if (containing_chunk == nullptr)
 			return BlockId_Air;
-		return containing_chunk->GetBlock(WorldToLocalBlockPosition(pos));
+		return containing_chunk->GetBlockImmediate(WorldToLocalBlockPosition(pos));
+	}
+	
+	void ChunkManager::SetBlock(const BlockPosition &pos, BlockId block)
+	{
+		Chunk *containing_chunk = GetChunk(BlockToChunkPosition(pos));
+		if (containing_chunk != nullptr)
+			containing_chunk->SetBlockImmediate(WorldToLocalBlockPosition(pos), block);
 	}
 }

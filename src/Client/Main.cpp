@@ -1,21 +1,22 @@
+#include "Main.h"
 #include <iostream>
-#include "Backend/Backend.h"
 
+#include "Backend/Backend.h"
 #include "Backend/ShaderFile.h"
 #include "Texture.h"
 
+#include "World/World.h"
+
+#include <Common/World/WorldPosition.h>
+
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/euler_angles.hpp>
 
-#include <Common/World/World.h>
-
-#include <GL/glew.h>
+std::string executable_dir;
 
 int main(int argc, char *argv[])
 {
 	//Get executable directory
-	std::string executable_dir;
 	if (argc > 0)
 	{
 		executable_dir = argv[0];
@@ -55,88 +56,19 @@ int main(int argc, char *argv[])
 	Backend::Render::Render *render = backend->GetRender();
 	Backend::Event::Event *event = backend->GetEvent();
 	
-	//Shader
-	Backend::Render::ShaderFile shader_file(executable_dir + "Data/Shader/Generic.shd");
-	if (shader_file.GetError())
-	{
-		std::cout << "shader file error " << shader_file.GetError() << std::endl;
-		return 1;
-	}
-	
-	Backend::Render::Shader *shader = render->NewShader(shader_file);
-	if (shader == nullptr)
-	{
-		std::cout << "Failed to create shader instance" << std::endl;
-		return 1;
-	}
-	else if (shader->GetError())
-	{
-		std::cout << "shader error " << shader->GetError() << std::endl;
-		return 1;
-	}
-	
 	//Initialize render state
 	render->SetDepthCompare(Backend::Render::DepthCompare_LessEqual);
 	render->LockMouse();
 	
-	//Game state
-	World::World world;
-	
-	World::Chunk *chunk[8][8];
-	Backend::Render::Mesh *chunk_mesh[8][8];
-	for (int z = 0; z < 8; z++)
-	{
-		for (int x = 0; x < 8; x++)
-		{
-			//Generate chunk
-			chunk[z][x] = &((world.GetChunkManager())->GenerateChunk({x + 2, z + 4}));
-		}
-	}
-	
-	for (int z = 0; z < 8; z++)
-	{
-		for (int x = 0; x < 8; x++)
-		{
-			//Create chunk mesh
-			World::ChunkMeshData mesh_data = chunk[z][x]->GetMeshData();
-			
-			std::vector<Backend::Render::Vertex> vert;
-			for (auto &i : mesh_data.vert)
-			{
-				vert.push_back({
-					{i.x, i.y, i.z},
-					{0.0f, 0.0f},
-					{0.0f, 0.0f, 0.0f},
-					{i.r, i.g, i.b, 1.0f},
-				});
-			}
-			
-			Backend::Render::Mesh *mesh = render->NewMesh(vert, mesh_data.ind);
-			if (mesh == nullptr)
-			{
-				std::cout << "Failed to create mesh instance" << std::endl;
-				return 1;
-			}
-			else if (mesh->GetError())
-			{
-				std::cout << "mesh error " << mesh->GetError() << std::endl;
-				return 1;
-			}
-			
-			chunk_mesh[z][x] = mesh;
-		}
-	}
+	//Create world
+	World::World world(render);
 	
 	//Render scene
-	glm::mat4 projection;
-	glm::mat4 view;
-	glm::mat4 model;
-	
-	glm::vec3 cam_pos = {8.0f, 130.0f, 8.0f};
-	float cam_turn = 0.0f;
-	float cam_look = -1.5f;
-	glm::vec3 cam_up = {0.0f, 1.0f,  0.0f};
-	bool w = false, a = false, s = false, d = false;
+	glm::dvec3 cam_pos = {8.0f, 130.0f, 8.0f};
+	double cam_turn = 0.0f;
+	double cam_look = -1.5f;
+	glm::dvec3 cam_up = {0.0f, 1.0f,  0.0f};
+	bool w = false, a = false, s = false, d = false, e = false;
 	
 	while (1)
 	{
@@ -168,6 +100,9 @@ int main(int argc, char *argv[])
 								case Backend::Event::InputCode_D:
 									d = event_data.input_bool.value;
 									break;
+								case Backend::Event::InputCode_E:
+									e = event_data.input_bool.value;
+									break;
 							}
 							break;
 					}
@@ -197,17 +132,14 @@ int main(int argc, char *argv[])
 		if (quit)
 			break;
 			
-		//Get new projection matrix
-		projection = glm::perspective(glm::radians(70.0f), (float)render->GetWidth() / (float)render->GetHeight(), 0.1f, 1024.f);
-		
 		//Move camera
-		glm::vec3 cam_dir = {
+		glm::dvec3 cam_dir = {
 			-glm::sin(cam_turn) * glm::cos(cam_look),
 			glm::sin(cam_look),
 			glm::cos(cam_turn) * glm::cos(cam_look),
 		};
 		
-		float cam_speed = 0.25f;
+		double cam_speed = 0.25f;
 		if (w)
 			cam_pos += cam_dir * cam_speed;
 		if (s)
@@ -217,41 +149,36 @@ int main(int argc, char *argv[])
 		if (d)
 			cam_pos += glm::normalize(glm::cross(cam_dir, cam_up)) * cam_speed;
 		
-		//Use generic shader
-		shader->Bind();
-		shader->SetUniform("u_projection", 1, &(projection[0][0]));
+		//Tick world
+		const World::ChunkPosition &cam_chunk = World::WorldToChunkPosition(cam_pos);
+		if (!e)
+		{
+			#define GEN_RAD 3
+			for (int x = -GEN_RAD; x <= GEN_RAD; x++)
+				for (int z = -GEN_RAD; z <= GEN_RAD; z++)
+					world.GenerateChunk({cam_chunk.x + x, cam_chunk.z + z});
+		}
+		if (world.Update())
+		{
+			std::cout << world.GetError() << std::endl;
+			return 1;
+		}
 		
 		//Render sky
-		view = glm::lookAt({}, cam_dir, {0.0f, 1.0f, 0.0f});
-		shader->SetUniform("u_view", 1, &(view[0][0]));
-		
 		render->ClearColour(0.7529412f, 0.8470588f, 1.0f);
 		render->ClearDepth(1.0f);
 		
 		//Render scene
-		view = glm::lookAt(cam_pos, cam_pos + cam_dir, {0.0f, 1.0f, 0.0f});
-		shader->SetUniform("u_view", 1, &(view[0][0]));
-		
-		for (int z = 0; z < 8; z++)
+		if (world.Render(cam_pos, cam_dir))
 		{
-			for (int x = 0; x < 8; x++)
-			{
-				model = glm::translate(glm::mat4(1.0f), {CHUNK_DIM * x * 1, 0, CHUNK_DIM * z * 1});
-				shader->SetUniform("u_model", 1, &(model[0][0]));
-				chunk_mesh[z][x]->Draw();
-			}
+			std::cout << world.GetError() << std::endl;
+			return 1;
 		}
 		
 		//End frame
 		if (render->EndFrame())
 			break;
 	}
-	
-	//Delete render objects
-	for (int z = 0; z < 8; z++)
-		for (int x = 0; x < 8; x++)
-			delete chunk_mesh[z][x];
-	delete shader;
 	
 	//Delete backend
 	delete backend;

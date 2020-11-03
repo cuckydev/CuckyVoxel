@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <unordered_map>
+#include <vector>
+
 #include "WorldDef.h"
 #include "WorldPosition.h"
 #include "Chunk.h"
@@ -33,8 +35,7 @@ namespace World
 			//Error
 			Error error;
 			
-			//Parent world
-			World &parent_world;
+			//Seed
 			int64_t seed;
 			
 			//Current chunks
@@ -50,20 +51,31 @@ namespace World
 			
 		public:
 			//Constructor and destructor
-			ChunkManager(World &parent_world);
+			ChunkManager(int64_t _seed);
 			~ChunkManager();
 			
 			//Chunk generation interface
 			void GetChunkWeather(const ChunkPosition &chunk_pos, double temperature[], double humidity[]);
 			
-			//Chunk manager interface
-			Chunk &CreateChunk(const ChunkPosition &chunk_pos);
-			Chunk &GenerateChunk(const ChunkPosition &chunk_pos);
+			//Chunk interface
+			bool HasChunk(const ChunkPosition &chunk_pos) const;
+			Chunk *GetChunk(const ChunkPosition &chunk_pos);
+			
+			Chunk &AddChunk(const ChunkPosition &chunk_pos);
 			void DeleteChunk(const ChunkPosition &chunk_pos);
-			const Chunk *GetChunk(const ChunkPosition &chunk_pos);
 			
-			Block GetBlock(const BlockPosition &pos);
+			Chunk &GenerateChunk(const ChunkPosition &chunk_pos);
 			
+			bool HasNeighbours(const ChunkPosition &chunk_pos) const;
+			void AddNeighbours(const ChunkPosition &chunk_pos);
+			
+			const ChunkPositionMap<Chunk> &GetChunks() const { return chunks; }
+			
+			//Block interface
+			BlockId GetBlock(const BlockPosition &pos);
+			void SetBlock(const BlockPosition &pos, BlockId block);
+			
+			//Get seed
 			const int64_t &GetSeed() const { return seed; }
 			
 			//Get error

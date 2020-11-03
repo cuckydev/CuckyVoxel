@@ -40,8 +40,6 @@ add_executable(CuckyVoxel WIN32
 	
 	# World
 	"src/Common/World/WorldDef.h"
-	"src/Common/World/World.cpp"
-	"src/Common/World/World.h"
 	"src/Common/World/WorldPosition.cpp"
 	"src/Common/World/WorldPosition.h"
 	"src/Common/World/ChunkManager.cpp"
@@ -147,8 +145,13 @@ if(COMPILE_CLIENT)
 	target_sources(CuckyVoxel PRIVATE
 		# CuckyVoxel client
 		"src/Client/Main.cpp"
+		"src/Client/Main.h"
 		"src/Client/Texture.cpp"
 		"src/Client/Texture.h"
+		"src/Client/World/World.cpp"
+		"src/Client/World/World.h"
+		"src/Client/World/ChunkMesh.cpp"
+		"src/Client/World/ChunkMesh.h"
 		
 		# Backend
 		"src/Client/Backend/Backend.cpp"

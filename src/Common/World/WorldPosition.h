@@ -13,7 +13,7 @@ namespace World
 		//Hash
 		uint64_t Hash() const
 		{
-			return (x * 88339) ^ (z * 91967);
+			return x * 8976890 + z;
 		}
 		
 		//Operators

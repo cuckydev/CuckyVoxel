@@ -13,8 +13,8 @@ namespace World
 	ChunkPosition BlockToChunkPosition(const BlockPosition &position)
 	{
 		return {
-			(int32_t)((position.x < 0) ? ((position.x - CHUNK_DIM) / CHUNK_DIM) : (position.x / CHUNK_DIM)),
-			(int32_t)((position.z < 0) ? ((position.z - CHUNK_DIM) / CHUNK_DIM) : (position.z / CHUNK_DIM)),
+			(int32_t)((position.x < 0) ? ((position.x - CHUNK_DIM + 1) / CHUNK_DIM) : (position.x / CHUNK_DIM)),
+			(int32_t)((position.z < 0) ? ((position.z - CHUNK_DIM + 1) / CHUNK_DIM) : (position.z / CHUNK_DIM)),
 		};
 	};
 	

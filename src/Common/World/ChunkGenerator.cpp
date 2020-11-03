@@ -175,7 +175,11 @@ namespace World
 					double d7 = (noise[nx + 0][nz + 1][ny + 1] - d3) / (double)noise_yp;
 					double d8 = (noise[nx + 1][nz + 1][ny + 1] - d4) / (double)noise_yp;
 					
-					//Process noise
+					//Process noise as block data
+					static const int zinc = CHUNK_DIM - noise_xp;
+					static const int yinc = zinc * CHUNK_DIM;
+					Block *blockp = &blocks[((ny * noise_xp) * (CHUNK_DIM * CHUNK_DIM)) + ((nz * noise_xp) * CHUNK_DIM) + (nx * noise_xp)];
+					
 					for (int sy = 0; sy < noise_yp; sy++)
 					{
 						double d10 = d1;
@@ -190,25 +194,35 @@ namespace World
 							
 							for (int sx = 0; sx < noise_xp; sx++)
 							{
-								int bx = (nx * noise_xp) + sx;
-								int by = (ny * noise_yp) + sy;
-								int bz = (nz * noise_xp) + sz;
+								//int bx = (nx * noise_xp) + sx;
+								//int by = (ny * noise_yp) + sy;
+								//int bz = (nz * noise_xp) + sz;
 								
-								//Place stone
+								//Get block to place
+								BlockId next_block;
 								if (d15 > 0.0)
-									blocks[(by * (CHUNK_DIM * CHUNK_DIM)) + (bz * CHUNK_DIM) + (bx)] = BlockId_Stone;
+									next_block = BlockId_Stone;
+								else
+									next_block = BlockId_Air;
+								
+								//Place block
+								*blockp++ = next_block;
 								
 								d15 += d16;
 							}
 							
 							d10 += d12;
 							d11 += d13;
+							
+							blockp += zinc;
 						}
 						
 						d1 += d5;
 						d2 += d6;
 						d3 += d7;
 						d4 += d8;
+						
+						blockp += yinc;
 					}
 				}
 			}
