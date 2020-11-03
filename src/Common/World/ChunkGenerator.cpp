@@ -147,7 +147,7 @@ namespace World
 	}
 	
 	//Chunk generator interface
-	void ChunkGenerator::GenerateTerrain(const ChunkPosition &pos, Block blocks[])
+	void ChunkGenerator::GenerateChunk(const ChunkPosition &pos, Block blocks[])
 	{
 		//Get weather tables
 		double temperature[CHUNK_DIM][CHUNK_DIM] = {};

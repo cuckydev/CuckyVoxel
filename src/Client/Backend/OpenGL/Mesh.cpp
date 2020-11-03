@@ -27,9 +27,9 @@ namespace Backend
 		Mesh_OpenGL::~Mesh_OpenGL()
 		{
 			//Delete GL objects
-			glDeleteVertexArrays(1, &vao_id);
-			glDeleteBuffers(1, &vbo_id);
 			glDeleteBuffers(1, &eab_id);
+			glDeleteBuffers(1, &vbo_id);
+			glDeleteVertexArrays(1, &vao_id);
 		}
 		
 		//Mesh interface

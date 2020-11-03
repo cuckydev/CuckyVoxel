@@ -1,6 +1,8 @@
 #include "Chunk.h"
 #include "ChunkManager.h"
 
+#include <algorithm>
+
 #include <Common/Util/Random.h>
 
 namespace World
@@ -16,13 +18,22 @@ namespace World
 		return;
 	}
 	
-	//Chunk terrain generation
+	//Chunk interface
 	void Chunk::Generate(ChunkGenerator *chunk_generator)
 	{
-		chunk_generator->GenerateTerrain(pos, &(blocks[0][0][0]));
+		chunk_generator->GenerateChunk(pos, &(blocks[0][0][0]));
 	}
 	
-	//Chunk interface
+	void Chunk::SetData(const Block _blocks[])
+	{
+		std::copy_n(&(_blocks[0]), CHUNK_SIZE, &(blocks[0][0][0]));
+	}
+	
+	void Chunk::UpdateMeshBlocks()
+	{
+		std::copy_n(&(blocks[0][0][0]), CHUNK_SIZE, &(mesh_blocks[0][0][0]));
+	}
+	
 	BlockId Chunk::GetBlock(const BlockPosition &block_pos) const
 	{
 		if (block_pos.y >= 0 && block_pos.y < CHUNK_HEIGHT)
@@ -54,6 +65,11 @@ namespace World
 	void Chunk::SetBlockImmediate(const BlockPosition &block_pos, BlockId block)
 	{
 		blocks[block_pos.y][block_pos.z][block_pos.x] = block;
+	}
+	
+	BlockId Chunk::GetMeshBlock(const BlockPosition &block_pos)
+	{
+		return (BlockId)mesh_blocks[block_pos.y][block_pos.z][block_pos.x];
 	}
 	
 	//Mesh generation
@@ -96,7 +112,7 @@ namespace World
 	{
 		if (chunk == nullptr)
 			return false;
-		return DoMakeFace(chunk->GetBlockImmediate(pos));
+		return DoMakeFace(chunk->GetMeshBlock(pos));
 	}
 	
 	ChunkMeshData Chunk::GetMeshData()
@@ -120,7 +136,7 @@ namespace World
 		int ind_i = 0;
 		
 		//Generate mesh data
-		Block *blockp = &(blocks[0][0][0]);
+		Block *blockp = &(mesh_blocks[0][0][0]);
 		for (int y = 0; y < CHUNK_HEIGHT; y++)
 		{
 			for (int z = 0; z < CHUNK_DIM; z++)

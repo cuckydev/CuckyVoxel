@@ -31,6 +31,7 @@ namespace World
 			
 			//Chunk block data
 			Block blocks[CHUNK_HEIGHT][CHUNK_DIM][CHUNK_DIM] = { BlockId_Air };
+			Block mesh_blocks[CHUNK_HEIGHT][CHUNK_DIM][CHUNK_DIM] = { BlockId_Air };
 			
 		public:
 			//Constructor and destructor
@@ -39,12 +40,17 @@ namespace World
 			
 			//Chunk interface
 			void Generate(ChunkGenerator *chunk_generator);
+			void SetData(const Block _blocks[]);
+			
+			void UpdateMeshBlocks();
 			
 			BlockId GetBlock(const BlockPosition &block_pos) const;
 			void SetBlock(const BlockPosition &block_pos, BlockId block);
 			
 			BlockId GetBlockImmediate(const BlockPosition &block_pos) const;
 			void SetBlockImmediate(const BlockPosition &block_pos, BlockId block);
+			
+			BlockId GetMeshBlock(const BlockPosition &block_pos);
 			
 			ChunkMeshData GetMeshData();
 	};

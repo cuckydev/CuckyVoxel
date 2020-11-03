@@ -63,11 +63,11 @@ int main(int argc, char *argv[])
 	//Create world
 	World::World world(render);
 	
-	//Render scene
-	glm::dvec3 cam_pos = {8.0f, 130.0f, 8.0f};
-	double cam_turn = 0.0f;
-	double cam_look = -1.5f;
-	glm::dvec3 cam_up = {0.0f, 1.0f,  0.0f};
+	//Render scene (all this code is temporary)
+	glm::dvec3 cam_pos = {8.0, 70.0, 8.0};
+	double cam_turn = 0.0;
+	double cam_look = -1.5;
+	glm::dvec3 cam_up = {0.0, 1.0,  0.0};
 	bool w = false, a = false, s = false, d = false, e = false;
 	
 	while (1)
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 			glm::cos(cam_turn) * glm::cos(cam_look),
 		};
 		
-		double cam_speed = 0.25f;
+		double cam_speed = 0.75;
 		if (w)
 			cam_pos += cam_dir * cam_speed;
 		if (s)
@@ -150,15 +150,7 @@ int main(int argc, char *argv[])
 			cam_pos += glm::normalize(glm::cross(cam_dir, cam_up)) * cam_speed;
 		
 		//Tick world
-		const World::ChunkPosition &cam_chunk = World::WorldToChunkPosition(cam_pos);
-		if (!e)
-		{
-			#define GEN_RAD 3
-			for (int x = -GEN_RAD; x <= GEN_RAD; x++)
-				for (int z = -GEN_RAD; z <= GEN_RAD; z++)
-					world.GenerateChunk({cam_chunk.x + x, cam_chunk.z + z});
-		}
-		if (world.Update())
+		if (world.Update(cam_pos))
 		{
 			std::cout << world.GetError() << std::endl;
 			return 1;

@@ -78,6 +78,9 @@ namespace World
 			//Get seed
 			const int64_t &GetSeed() const { return seed; }
 			
+			//Get chunk generator
+			ChunkGenerator *GetChunkGenerator() { return chunk_generator; }
+			
 			//Get error
 			const Error &GetError() const { return error; }
 	};

@@ -5,7 +5,7 @@ namespace World
 	//Constructor and destructor
 	ChunkMesh::ChunkMesh(Backend::Render::Render *_render) : render(_render)
 	{
-		
+		return;
 	}
 	
 	ChunkMesh::~ChunkMesh()

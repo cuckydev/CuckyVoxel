@@ -2,6 +2,10 @@
 #include <cstdint>
 #include <vector>
 
+#include <atomic>
+#include <mutex>
+#include <thread>
+
 #include "Common/World/WorldDef.h"
 #include "Common/World/ChunkManager.h"
 #include "ChunkMesh.h"
@@ -14,6 +18,20 @@
 
 namespace World
 {
+	//Generation thread output
+	struct GenThread_Out
+	{
+		ChunkPosition pos;
+		Block blocks[CHUNK_HEIGHT][CHUNK_DIM][CHUNK_DIM];
+	};
+	
+	//Mesh thread output
+	struct MeshThread_Out
+	{
+		ChunkPosition pos;
+		ChunkMeshData mesh_data;
+	};
+	
 	//World class
 	class World
 	{
@@ -23,6 +41,23 @@ namespace World
 			
 			//World information
 			int64_t seed;
+			
+			//Threads
+			std::atomic<bool> threads_running = false;
+			
+			//World generation
+			std::atomic<bool> genthread_generating = false;
+			std::thread *genthread = nullptr;
+			
+			std::vector<ChunkPosition> genthread_in;
+			std::vector<GenThread_Out> genthread_out;
+			
+			//World generation
+			std::atomic<bool> meshthread_generating = false;
+			std::thread *meshthread = nullptr;
+			
+			std::vector<ChunkPosition> meshthread_in;
+			std::vector<MeshThread_Out> meshthread_out;
 			
 			//Chunk state
 			ChunkManager *chunk_manager = nullptr;
@@ -38,6 +73,8 @@ namespace World
 			//Internal interface
 			bool InitWorld();
 			
+			bool CheckChunkRange(const ChunkPosition &chunk_pos);
+			
 		public:
 			//Constructors and destructor
 			World(Backend::Render::Render *_render);
@@ -45,11 +82,8 @@ namespace World
 			~World();
 			
 			//World interface
-			bool Update();
-			bool Render(glm::vec3 cam_pos, glm::vec3 cam_dir);
-			
-			//World chunk interface
-			void GenerateChunk(const ChunkPosition &chunk_pos);
+			bool Update(glm::dvec3 cam_pos);
+			bool Render(glm::dvec3 cam_pos, glm::dvec3 cam_dir);
 			
 			//Get seed
 			const int64_t &GetSeed() const { return seed; }

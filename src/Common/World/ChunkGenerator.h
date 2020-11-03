@@ -37,6 +37,6 @@ namespace World
 			~ChunkGenerator();
 			
 			//Chunk generator interface
-			void GenerateTerrain(const ChunkPosition &pos, Block blocks[]);
+			void GenerateChunk(const ChunkPosition &pos, Block blocks[]);
 	};
 }

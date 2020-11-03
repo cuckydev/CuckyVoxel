@@ -68,6 +68,9 @@ if(PKG_CONFIG_STATIC_LIBS)
 	target_link_options(CuckyVoxel PRIVATE "-static")
 endif()
 
+# Enable threading functions
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+
 # Use LTO if requested
 if(LTO)
 	include(CheckIPOSupported)
