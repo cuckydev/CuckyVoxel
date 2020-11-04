@@ -170,7 +170,7 @@ namespace World
 		const ChunkPosition &cam_chunk = WorldToChunkPosition(cam_pos);
 		
 		//Handle chunk generation
-		if (!genthread_generating)
+		if (!genthread_generating && !meshthread_generating)
 		{
 			if (genthread_out.size())
 			{
@@ -280,7 +280,6 @@ namespace World
 					{
 						//Get chunk to get mesh from
 						Chunk *chunk = chunk_manager->GetChunk(chunk_pos);
-						
 						if (chunk != nullptr)
 						{
 							//Update chunk mesh blocks and generate mesh
