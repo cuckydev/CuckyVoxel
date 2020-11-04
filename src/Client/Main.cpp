@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
 	
 	//Create world
 	World::World world(render);
+	std::cout << world.GetSeed() << std::endl;
 	
 	//Render scene (all this code is temporary)
 	glm::dvec3 cam_pos = {0.0, 70.0, 0.0};

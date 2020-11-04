@@ -53,11 +53,11 @@ namespace World
 			{
 				const int pz = nz * (CHUNK_DIM - 1) / noise_zd;
 				
-				//Handle weather at point
+				//Handle biome at point
 				const double point_temp = temperature[px * CHUNK_DIM + pz];
 				const double point_humid =   humidity[px * CHUNK_DIM + pz] * point_temp;
 				
-				double humid_factor = 1.0 - ((*humid_p++) * (*temp_p++));
+				double humid_factor = 1.0 - point_humid;
 				humid_factor *= humid_factor;
 				humid_factor *= humid_factor;
 				humid_factor = 1.0 - humid_factor;
@@ -346,7 +346,7 @@ namespace World
 		//Seed random off chunk position
 		random.SetSeed((0x4F9939F508 * pos.x) + (0x1EF1565BD5 * pos.z));
 		
-		//Get weather tables
+		//Get biome tables
 		double temperature[CHUNK_DIM][CHUNK_DIM] = {};
 		double humidity[CHUNK_DIM][CHUNK_DIM] = {};
 		parent_chunk_manager.GetChunkBiome(pos, &(temperature[0][0]), &(humidity[0][0]));
