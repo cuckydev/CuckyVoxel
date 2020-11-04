@@ -17,18 +17,18 @@ namespace World
 			ChunkManager &parent_chunk_manager;
 			int64_t seed;
 			
-			//Random and noise
+			//Random and noise generators
 			Random random;
 			
-			Noise::Octaves_Perlin field_912_k;
-			Noise::Octaves_Perlin field_911_l;
-			Noise::Octaves_Perlin field_910_m;
-			Noise::Octaves_Perlin field_909_n;
-			Noise::Octaves_Perlin field_908_o;
+			Noise::Octaves_Perlin noise_2d_1;
+			Noise::Octaves_Perlin noise_2d_2;
 			
-			Noise::Octaves_Perlin field_922_a;
-			Noise::Octaves_Perlin field_921_b;
-			Noise::Octaves_Perlin field_920_c;
+			Noise::Octaves_Perlin noise_3d_1;
+			Noise::Octaves_Perlin noise_3d_2;
+			Noise::Octaves_Perlin noise_3d_lerp;
+			
+			Noise::Octaves_Perlin noise_surf_map;
+			Noise::Octaves_Perlin noise_surf_depth;
 			
 		private:
 			//Internal interface

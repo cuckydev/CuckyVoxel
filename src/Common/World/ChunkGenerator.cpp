@@ -25,19 +25,26 @@ namespace World
 		//Generate noise tables
 		double layer_2d_1[noise_xd * noise_zd] = {};
 		double layer_2d_2[noise_xd * noise_zd] = {};
-		field_922_a.Noise(layer_2d_1, x, z, noise_xd, noise_zd, 1.121, 1.121);
-		field_921_b.Noise(layer_2d_2, x, z, noise_xd, noise_zd, 200.0, 200.0);
+		noise_2d_1.Noise(layer_2d_1, x, z, noise_xd, noise_zd, 1.121, 1.121);
+		noise_2d_2.Noise(layer_2d_2, x, z, noise_xd, noise_zd, 200.0, 200.0);
 		
+		double layer_3d_lerp[noise_xd * noise_zd * noise_yd] = {};
 		double layer_3d_1[noise_xd * noise_zd * noise_yd] = {};
 		double layer_3d_2[noise_xd * noise_zd * noise_yd] = {};
-		double layer_3d_3[noise_xd * noise_zd * noise_yd] = {};
-		field_910_m.Noise(layer_3d_1, x, y, z, noise_xd, noise_yd, noise_zd, xf / 80.0, yf / 160.0, xf / 80.0);
-		field_912_k.Noise(layer_3d_2, x, y, z, noise_xd, noise_yd, noise_zd, xf,        yf,         xf);
-		field_911_l.Noise(layer_3d_3, x, y, z, noise_xd, noise_yd, noise_zd, xf,        yf,         xf);
+		noise_3d_lerp.Noise(layer_3d_lerp, x, y, z, noise_xd, noise_yd, noise_zd, xf / 80.0, yf / 160.0, xf / 80.0);
+		noise_3d_1.Noise(layer_3d_1, x, y, z, noise_xd, noise_yd, noise_zd, xf,        yf,         xf);
+		noise_3d_2.Noise(layer_3d_2, x, y, z, noise_xd, noise_yd, noise_zd, xf,        yf,         xf);
 		
 		//Process noise
-		int p_2d = 0;
-		int p_3d = 0;
+		double *layer_2d_1_p = layer_2d_1;
+		double *layer_2d_2_p = layer_2d_2;
+		
+		double *layer_3d_lerp_p = layer_3d_lerp;
+		double *layer_3d_1_p = layer_3d_1;
+		double *layer_3d_2_p = layer_3d_2;
+		
+		double *temp_p = temperature;
+		double *humid_p = humidity;
 		
 		for (int nx = 0; nx < noise_xd; nx++)
 		{
@@ -50,17 +57,17 @@ namespace World
 				const double point_temp = temperature[px * CHUNK_DIM + pz];
 				const double point_humid =   humidity[px * CHUNK_DIM + pz] * point_temp;
 				
-				double humid_factor = 1.0 - point_humid;
+				double humid_factor = 1.0 - ((*humid_p++) * (*temp_p++));
 				humid_factor *= humid_factor;
 				humid_factor *= humid_factor;
 				humid_factor = 1.0 - humid_factor;
 				
-				//Handle 2D layers
-				double value_2d_1 = ((layer_2d_1[p_2d] + 256.0) / 512.0) * humid_factor;
+				//Get 2D layer values
+				double value_2d_1 = (((*layer_2d_1_p++) + 256.0) / 512.0) * humid_factor;
 				if (value_2d_1 > 1.0)
 					value_2d_1 = 1.0;
 				
-				double value_2d_2 = layer_2d_2[p_2d] / 8000.0;
+				double value_2d_2 = (*layer_2d_2_p++) / 8000.0;
 				if (value_2d_2 < 0.0)
 					value_2d_2 *= -0.3;
 				value_2d_2 = (value_2d_2 * 3.0) - 2.0;
@@ -85,40 +92,42 @@ namespace World
 					value_2d_1 = 0.0;
 				value_2d_1 += 0.5;
 				
-				//Get final 2D layer value
-				value_2d_2 *= (double)noise_yd / 16.0;
-				const double d7 = ((double)noise_yd / 2.0) + (value_2d_2 * 4.0);
-				p_2d++;
+				//Get final height, brought up to the water level
+				static const int water_yd = (water_level * 2 / noise_yp) + 1;
+				
+				value_2d_2 *= (double)water_yd / 16.0;
+				const double height = ((double)water_yd / 2.0) + (value_2d_2 * 4.0);
 				
 				for (int ny = 0; ny < noise_yd; ny++)
 				{
-					//Handle 3D layers
-					double d8 = 0.0;
-					double d9 = (((double)ny - d7) * 12.0) / value_2d_1;
-					if (d9 < 0.0)
-						d9 *= 4.0;
+					//Get height mod
+					double final_value = 0.0;
+					double height_mod = (((double)ny - height) * 12.0) / value_2d_1;
+					if (height_mod < 0.0)
+						height_mod *= 4.0; //Flatten terrain below water level
 					
-					const double value_3d_2 = (layer_3d_2[p_3d] / 512.0);
-					const double value_3d_3 = (layer_3d_3[p_3d] / 512.0);
-					const double value_3d_1 = (layer_3d_1[p_3d] / 10.0 + 1.0) / 2.0;
+					//Apply 3D noise layers to final value
+					const double value_3d_1 = ((*layer_3d_1_p++) / 512.0);
+					const double value_3d_2 = ((*layer_3d_2_p++) / 512.0);
+					const double value_3d_lerp = ((*layer_3d_lerp_p++) / 10.0 + 1.0) / 2.0;
 					
-					if (value_3d_1 < 0.0D)
-						d8 = value_3d_2;
-					else if(value_3d_1 > 1.0D)
-						d8 = value_3d_3;
+					if (value_3d_lerp < 0.0D)
+						final_value = value_3d_1;
+					else if(value_3d_lerp > 1.0D)
+						final_value = value_3d_2;
 					else
-						d8 = value_3d_2 + (value_3d_3 - value_3d_2) * value_3d_1;
-					d8 -= d9;
+						final_value = value_3d_1 + (value_3d_2 - value_3d_1) * value_3d_lerp;
+					final_value -= height_mod;
 					
+					//Flatten terrain near the top of the world
 					if (ny > (noise_yd - 4))
 					{
-						const double d13 = (double)(ny - (noise_yd - 4)) / 3.0;
-						d8 = (d8 * (1.0 - d13)) + (-10.0 * d13);
+						const double lerp = (double)(ny - (noise_yd - 4)) / 3.0;
+						final_value = (final_value * (1.0 - lerp)) + (-10.0 * lerp);
 					}
 					
-					//Set noise
-					out[p_3d] = d8;
-					p_3d++;
+					//Set noise value
+					*out++ = final_value;
 				}
 			}
 		}
@@ -136,33 +145,43 @@ namespace World
 			{
 				for (int nx = 0; nx < noise_dim; nx++)
 				{
-					//Get noise points
-					double d1 = (noise[nx + 0][nz + 0][ny + 0]);
-					double d2 = (noise[nx + 1][nz + 0][ny + 0]);
-					double d3 = (noise[nx + 0][nz + 1][ny + 0]);
-					double d4 = (noise[nx + 1][nz + 1][ny + 0]);
+					//Get noise chunk points
+					double c000 = (noise[nx + 0][nz + 0][ny + 0]);
+					double c100 = (noise[nx + 1][nz + 0][ny + 0]);
+					double c010 = (noise[nx + 0][nz + 1][ny + 0]);
+					double c110 = (noise[nx + 1][nz + 1][ny + 0]);
 					
-					double d5 = (noise[nx + 0][nz + 0][ny + 1] - d1) / (double)noise_yp;
-					double d6 = (noise[nx + 1][nz + 0][ny + 1] - d2) / (double)noise_yp;
-					double d7 = (noise[nx + 0][nz + 1][ny + 1] - d3) / (double)noise_yp;
-					double d8 = (noise[nx + 1][nz + 1][ny + 1] - d4) / (double)noise_yp;
+					const double c001 = (noise[nx + 0][nz + 0][ny + 1]);
+					const double c101 = (noise[nx + 1][nz + 0][ny + 1]);
+					const double c011 = (noise[nx + 0][nz + 1][ny + 1]);
+					const double c111 = (noise[nx + 1][nz + 1][ny + 1]);
 					
-					//Process noise as block data
+					//Process noise chunk as block data using trilinear interpolation
 					static const int zinc = CHUNK_DIM - noise_xp;
 					static const int yinc = zinc * CHUNK_DIM;
 					Block *blockp = &blocks[((ny * noise_yp) * (CHUNK_DIM * CHUNK_DIM)) + ((nz * noise_xp) * CHUNK_DIM) + (nx * noise_xp)];
 					
+					double v00x = c000;
+					double v10x = c100;
+					double v01x = c010;
+					double v11x = c110;
+					
+					const double i00x = (c001 - c000) / (double)noise_yp;
+					const double i10x = (c101 - c100) / (double)noise_yp;
+					const double i01x = (c011 - c010) / (double)noise_yp;
+					const double i11x = (c111 - c110) / (double)noise_yp;
+					
 					for (int sy = 0; sy < noise_yp; sy++)
 					{
-						double d10 = d1;
-						double d11 = d2;
-						double d12 = (d3 - d1) / (double)noise_xp;
-						double d13 = (d4 - d2) / (double)noise_xp;
+						double vx0 = v00x;
+						double v1x = v10x;
+						double ix0 = (v01x - v00x) / (double)noise_xp;
+						double i1x = (v11x - v10x) / (double)noise_xp;
 						
 						for (int sz = 0; sz < noise_xp; sz++)
 						{
-							double d15 = d10;
-							double d16 = (d11 - d10) / (double)noise_xp;
+							double v = vx0;
+							double i = (v1x - vx0) / (double)noise_xp;
 							
 							for (int sx = 0; sx < noise_xp; sx++)
 							{
@@ -172,7 +191,7 @@ namespace World
 								
 								//Get block to place
 								BlockId next_block;
-								if (d15 > 0.0)
+								if (v > 0.0)
 									next_block = BlockId_Stone;
 								else
 									next_block = BlockId_Air;
@@ -180,19 +199,19 @@ namespace World
 								//Place block
 								*blockp++ = next_block;
 								
-								d15 += d16;
+								v += i;
 							}
 							
-							d10 += d12;
-							d11 += d13;
+							vx0 += ix0;
+							v1x += i1x;
 							
 							blockp += zinc;
 						}
 						
-						d1 += d5;
-						d2 += d6;
-						d3 += d7;
-						d4 += d8;
+						v00x += i00x;
+						v10x += i10x;
+						v01x += i01x;
+						v11x += i11x;
 						
 						blockp += yinc;
 					}
@@ -200,22 +219,22 @@ namespace World
 			}
 		}
 	}
+
 	
 	void ChunkGenerator::GenerateSurface(const ChunkPosition &pos, Block blocks[])
 	{
 		//Get noise
-		double field_904_s[CHUNK_DIM * CHUNK_DIM] = {};
-		field_909_n.Noise(field_904_s, pos.x * CHUNK_DIM, 109.0134, pos.z * CHUNK_DIM, CHUNK_DIM, 1, CHUNK_DIM, 0.03125, 1.0, 0.03125);
-		
-		double field_905_r[CHUNK_DIM * CHUNK_DIM] = {};
-		double field_903_t[CHUNK_DIM * CHUNK_DIM] = {};
-		field_909_n.Noise(field_905_r, pos.x * CHUNK_DIM, pos.z * CHUNK_DIM, 0.0, CHUNK_DIM, CHUNK_DIM, 1, 0.03125, 0.03125, 1.0);
-		field_908_o.Noise(field_903_t, pos.x * CHUNK_DIM, pos.z * CHUNK_DIM, 0.0, CHUNK_DIM, CHUNK_DIM, 1, 0.03125 * 2.0, 0.03125 * 2.0, 0.03125 * 2.0);
+		double gravel_map[CHUNK_DIM * CHUNK_DIM] = {};
+		double sand_map[CHUNK_DIM * CHUNK_DIM] = {};
+		double depth_map[CHUNK_DIM * CHUNK_DIM] = {};
+		noise_surf_map.Noise(gravel_map, pos.x * CHUNK_DIM, 109.0134, pos.z * CHUNK_DIM, CHUNK_DIM, 1, CHUNK_DIM, 0.03125, 1.0, 0.03125);
+		noise_surf_map.Noise(sand_map, pos.x * CHUNK_DIM, pos.z * CHUNK_DIM, CHUNK_DIM, CHUNK_DIM, 0.03125, 0.03125);
+		noise_surf_depth.Noise(depth_map, pos.x * CHUNK_DIM, pos.z * CHUNK_DIM, CHUNK_DIM, CHUNK_DIM, 0.03125 * 2.0, 0.03125 * 2.0);
 		
 		//Generate surface
-		double *field_904_sp = field_904_s;
-		double *field_905_rp = field_905_r;
-		double *field_903_tp = field_903_t;
+		double *gravel_map_p = gravel_map;
+		double *sand_map_p = sand_map;
+		double *depth_map_p = depth_map;
 		
 		for (int x = 0; x < CHUNK_DIM; x++)
 		{
@@ -223,14 +242,14 @@ namespace World
 			{
 				Block *blockp = &blocks[(CHUNK_HEIGHT * (CHUNK_DIM * CHUNK_DIM)) + (z * CHUNK_DIM) + (x)];
 				
-				int j1 = -1;
+				int surf_i = -1;
 				
 				BlockId top_block = BlockId_Grass;
 				BlockId filler_block = BlockId_Dirt;
 				
-				bool flag0 = (*field_905_rp++ + random.NextDouble() * 0.2) > 0.0;
-				bool flag1 = (*field_904_sp++ + random.NextDouble() * 0.2) > 3.0;
-				int i1 = (int)(*field_903_tp++ / 3.0 + 3.0 + random.NextDouble() * 0.25);
+				bool surf_sand = (*sand_map_p++ + random.NextDouble() * 0.2) > 0.0;
+				bool surf_gravel = (*gravel_map_p++ + random.NextDouble() * 0.2) > 3.0;
+				int surf_depth = (int)(*depth_map_p++ / 3.0 + 3.0 + random.NextDouble() * 0.25);
 				
 				for (int y = (CHUNK_HEIGHT - 1); y >= 0; y--)
 				{
@@ -241,28 +260,28 @@ namespace World
 					BlockId block = (BlockId)(*blockp);
 					if(block == BlockId_Air)
 					{
-						j1 = -1;
+						surf_i = -1;
 						continue;
 					}
 					if(block != BlockId_Stone)
 						continue;
 					
 					//Get top and filler block
-					if (j1 == -1)
+					if (surf_i == -1)
 					{
-						if (i1 <= 0)
+						if (surf_depth <= 0)
 						{
 							top_block = BlockId_Air;
 							filler_block = BlockId_Stone;
 						}
-						else if(y >= water_level - 4 && y <= water_level + 1)
+						else if (y >= water_level - 4 && y <= water_level + 1)
 						{
-							if (flag0)
+							if (surf_sand)
 							{
 								top_block = BlockId_Sand;
 								filler_block = BlockId_Sand;
 							}
-							else if (flag1)
+							else if (surf_gravel)
 							{
 								top_block = BlockId_Air;
 								filler_block = BlockId_Gravel;
@@ -274,11 +293,11 @@ namespace World
 							}
 						}
 						
-						//if(k1 < water_level && top_block == Blocks.air)
-						//	byte1 = Blocks.flowing_water;
+						//if(y < water_level && top_block == BlockId_Air)
+						//	top_block = BlockId_FlowingWater;
 						
 						//Set top block
-						j1 = i1;
+						surf_i = surf_depth;
 						if (y >= water_level - 1)
 							*blockp = top_block;
 						else
@@ -287,10 +306,10 @@ namespace World
 					else
 					{
 						//Set filler block
-						if (j1 > 0)
+						if (surf_i > 0)
 						{
 							*blockp = filler_block;
-							j1--;
+							surf_i--;
 						}
 					}
 				}
@@ -304,16 +323,16 @@ namespace World
 		//Use parent chunk manager
 		seed = parent_chunk_manager.GetSeed();
 		
-		//Initialize terrain noise
-		field_912_k.SetOctaves(seed, 16);
-		field_911_l.SetOctaves(seed, 16);
-		field_910_m.SetOctaves(seed, 8);
-		field_909_n.SetOctaves(seed, 4);
-		field_908_o.SetOctaves(seed, 4);
+		//Initialize noise generators
+		noise_2d_1.SetOctaves(seed, 10);
+		noise_2d_2.SetOctaves(seed, 16);
 		
-		field_922_a.SetOctaves(seed, 10);
-		field_921_b.SetOctaves(seed, 16);
-		field_920_c.SetOctaves(seed, 8);
+		noise_3d_1.SetOctaves(seed, 16);
+		noise_3d_2.SetOctaves(seed, 16);
+		noise_3d_lerp.SetOctaves(seed, 8);
+		
+		noise_surf_map.SetOctaves(seed, 4);
+		noise_surf_depth.SetOctaves(seed, 4);
 	}
 	
 	ChunkGenerator::~ChunkGenerator()

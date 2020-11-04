@@ -1,5 +1,9 @@
 #include "Perlin.h"
 
+//#define FIX_OVERFLOW_BUGS //Fix overflow bugs (i.e far lands)
+
+#include <cmath>
+
 namespace Noise
 {
 	//Initialization method
@@ -42,9 +46,15 @@ namespace Noise
 	double Perlin::Noise(const double xin, const double yin, const double zin)
 	{
 		//Get our coordinate with our given offsets
-		double x = xin + x_coord;
-		double y = yin + y_coord;
-		double z = zin + z_coord;
+		#ifdef FIX_OVERFLOW_BUGS
+			double x = std::fmod(xin, 256.0) + x_coord;
+			double y = std::fmod(yin, 256.0) + y_coord;
+			double z = std::fmod(zin, 256.0) + z_coord;
+		#else
+			double x = xin + x_coord;
+			double y = yin + y_coord;
+			double z = zin + z_coord;
+		#endif
 		
 		//Find unit cube that contains point
 		const int32_t X = fastfloor(x) & 0xFF;
@@ -85,13 +95,24 @@ namespace Noise
 	//Area noise overload (potentially http://staffwww.itn.liu.se/~stegu/simplexnoise/simplexnoise.pdf)
 	void Perlin::Noise(double out[], const double xin, const double yin, const double zin, const int32_t xl, const int32_t yl, const int32_t zl, const double xm, const double ym, const double zm, const double out_div)
 	{
+		#ifdef FIX_OVERFLOW_BUGS
+			//Get bounds of the noise area before it repeats
+			const double xmm = 256.0 / xm;
+			const double ymm = 256.0 / ym;
+			const double zmm = 256.0 / zm;
+		#endif
+		
 		double *outp = out;
 		if (yl == 1)
 		{
 			//2D noise
 			for (int32_t xi = 0; xi < xl; xi++)
 			{
-				double x = (xin + xi) * xm + x_coord;
+				#ifdef FIX_OVERFLOW_BUGS
+					double x = (std::fmod(xin, xmm) + xi) * xm + x_coord;
+				#else
+					double x = (xin + xi) * xm + x_coord;
+				#endif
 				
 				int32_t X = fastfloor(x); //Find unit grid cell containing X
 				x -= X; //Get relative X in cell
@@ -100,7 +121,11 @@ namespace Noise
 				
 				for (int32_t zi = 0; zi < zl; zi++)
 				{
-					double z = (zin + zi) * zm + z_coord;
+					#ifdef FIX_OVERFLOW_BUGS
+						double z = (std::fmod(zin, zmm) + zi) * zm + z_coord;
+					#else
+						double z = (zin + zi) * zm + z_coord;
+					#endif
 					
 					int32_t Z = fastfloor(z); //Find unit grid cell containing Z
 					z -= Z; //Get relative Z in cell
@@ -111,8 +136,8 @@ namespace Noise
 					const int32_t n9 = permutations[n8] + Z;
 					const int32_t n10 = permutations[permutations[X + 1] + 0] + Z;
 					
-					const double nxz0 = lerp(u, grad2d(permutations[n9    ], x, z),				grad3d(permutations[n10    ], x - 1.0, 0.0, z));
-					const double nxz1 = lerp(u, grad3d(permutations[n9 + 1], x, 0.0, z - 1.0),	grad3d(permutations[n10 + 1], x - 1.0, 0.0, z - 1.0));
+					const double nxz0 = lerp(u, grad2d(permutations[n9    ], x, z),            grad3d(permutations[n10    ], x - 1.0, 0.0, z));
+					const double nxz1 = lerp(u, grad3d(permutations[n9 + 1], x, 0.0, z - 1.0), grad3d(permutations[n10 + 1], x - 1.0, 0.0, z - 1.0));
 					const double nxz = lerp(w, nxz0, nxz1);
 					
 					*outp++ += nxz / out_div;
@@ -130,7 +155,11 @@ namespace Noise
 			
 			for (int32_t xi = 0; xi < xl; xi++)
 			{
-				double x = (xin + xi) * xm + x_coord;
+				#ifdef FIX_OVERFLOW_BUGS
+					double x = (std::fmod(xin, xmm) + xi) * xm + x_coord;
+				#else
+					double x = (xin + xi) * xm + x_coord;
+				#endif
 				
 				int32_t X = fastfloor(x); //Find unit grid cell containing X
 				x -= X; //Get relative X in cell
@@ -139,7 +168,11 @@ namespace Noise
 				
 				for (int32_t zi = 0; zi < zl; zi++)
 				{
-					double z = (zin + zi) * zm + z_coord;
+					#ifdef FIX_OVERFLOW_BUGS
+						double z = (std::fmod(zin, zmm) + zi) * zm + z_coord;
+					#else
+						double z = (zin + zi) * zm + z_coord;
+					#endif
 					
 					int32_t Z = fastfloor(z); //Find unit grid cell containing Z
 					z -= Z; //Get relative Z in cell
@@ -148,7 +181,11 @@ namespace Noise
 					
 					for (int32_t yi = 0; yi < yl; yi++)
 					{
-						double y = (yin + yi) * ym + y_coord;
+						#ifdef FIX_OVERFLOW_BUGS
+							double y = (std::fmod(yin, ymm) + yi) * ym + y_coord;
+						#else
+							double y = (yin + yi) * ym + y_coord;
+						#endif
 						
 						int32_t Y = fastfloor(y); //Find unit grid cell containing Y
 						y -= Y; //Get relative Y in cell

@@ -1,5 +1,9 @@
 #include "Simplex.h"
 
+//#define FIX_OVERFLOW_BUGS //Fix overflow bugs (i.e far lands)
+
+#include <cmath>
+
 namespace Noise
 {
 	//Simplex constants
@@ -46,13 +50,27 @@ namespace Noise
 	//Noise method (http://staffwww.itn.liu.se/~stegu/simplexnoise/SimplexNoise.java)
 	void Simplex::Noise(double out[], const double xin, const double yin, const int32_t xl, const int32_t yl, const double xm, const double ym, const double out_mult)
 	{
+		#ifdef FIX_OVERFLOW_BUGS
+			//Get bounds of the noise area before it repeats
+			const double xmm = 256.0 / xm;
+			const double ymm = 256.0 / ym;
+		#endif
+		
 		double *outp = out;
 		for (int32_t xi = 0; xi < xl; xi++)
 		{
-			const double nx = (xin + xi) * xm + x_coord;
+			#ifdef FIX_OVERFLOW_BUGS
+				const double nx = (std::fmod(xin, xmm) + xi) * xm + x_coord;
+			#else
+				const double nx = (xin + xi) * xm + x_coord;
+			#endif
 			for (int32_t yi = 0; yi < yl; yi++)
 			{
-				const double ny = (yin + yi) * ym + y_coord;
+				#ifdef FIX_OVERFLOW_BUGS
+					const double ny = (std::fmod(yin, ymm) + yi) * ym + y_coord;
+				#else
+					const double ny = (yin + yi) * ym + y_coord;
+				#endif
 				
 				//Skew the input space to determine which simplex cell we're in
 				const double s = (nx + ny) * F2; //Hairy factor for 2D
