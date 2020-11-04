@@ -15,11 +15,13 @@ namespace World
 	static const int noise_yd = noise_height + 1;
 	static const int noise_zd = noise_dim + 1;
 	
-	static const double noise_field_factor = 684.412;
-	
 	//Internal interface
 	void ChunkGenerator::InitializeNoiseField(double out[], int x, int y, int z, double temperature[], double humidity[])
 	{
+		//Constants
+		static const double xf = 684.412;
+		static const double yf = 684.412;
+		
 		//Generate noise tables
 		double layer_2d_1[noise_xd * noise_zd] = {};
 		double layer_2d_2[noise_xd * noise_zd] = {};
@@ -29,24 +31,24 @@ namespace World
 		double layer_3d_1[noise_xd * noise_zd * noise_yd] = {};
 		double layer_3d_2[noise_xd * noise_zd * noise_yd] = {};
 		double layer_3d_3[noise_xd * noise_zd * noise_yd] = {};
-		field_910_m.Noise(layer_3d_1, x, y, z, noise_xd, noise_yd, noise_zd, noise_field_factor / 80.0, noise_field_factor / 160.0, noise_field_factor / 80.0);
-		field_912_k.Noise(layer_3d_2, x, y, z, noise_xd, noise_yd, noise_zd, noise_field_factor,        noise_field_factor,         noise_field_factor);
-		field_911_l.Noise(layer_3d_3, x, y, z, noise_xd, noise_yd, noise_zd, noise_field_factor,        noise_field_factor,         noise_field_factor);
+		field_910_m.Noise(layer_3d_1, x, y, z, noise_xd, noise_yd, noise_zd, xf / 80.0, yf / 160.0, xf / 80.0);
+		field_912_k.Noise(layer_3d_2, x, y, z, noise_xd, noise_yd, noise_zd, xf,        yf,         xf);
+		field_911_l.Noise(layer_3d_3, x, y, z, noise_xd, noise_yd, noise_zd, xf,        yf,         xf);
 		
 		//Process noise
 		int p_2d = 0;
 		int p_3d = 0;
 		
-		for (int nz = 0; nz < noise_zd; nz++)
+		for (int nx = 0; nx < noise_xd; nx++)
 		{
-			int pz = nz * (CHUNK_DIM - 1) / noise_xd;
-			for (int nx = 0; nx < noise_xd; nx++)
+			const int px = nx * (CHUNK_DIM - 1) / noise_xd;
+			for (int nz = 0; nz < noise_zd; nz++)
 			{
-				int px = nx * (CHUNK_DIM - 1) / noise_xd;
+				const int pz = nz * (CHUNK_DIM - 1) / noise_zd;
 				
 				//Handle weather at point
-				const double point_temp = temperature[pz * CHUNK_DIM + px];
-				const double point_humid =   humidity[pz * CHUNK_DIM + px] * point_temp;
+				const double point_temp = temperature[px * CHUNK_DIM + pz];
+				const double point_humid =   humidity[px * CHUNK_DIM + pz] * point_temp;
 				
 				double humid_factor = 1.0 - point_humid;
 				humid_factor *= humid_factor;
@@ -84,8 +86,8 @@ namespace World
 				value_2d_1 += 0.5;
 				
 				//Get final 2D layer value
-				value_2d_2 *= ((double)water_level * 2.0 / noise_yp) / 16.0;
-				const double d7 = ((double)water_level / noise_yp) + (value_2d_2 * 4.0);
+				value_2d_2 *= (double)noise_yd / 16.0;
+				const double d7 = ((double)noise_yd / 2.0) + (value_2d_2 * 4.0);
 				p_2d++;
 				
 				for (int ny = 0; ny < noise_yd; ny++)
@@ -203,12 +205,12 @@ namespace World
 	{
 		//Get noise
 		double field_904_s[CHUNK_DIM * CHUNK_DIM] = {};
-		field_909_n.Noise(field_904_s, pos.z * 16, 109.0134, pos.x * 16, 16, 1, 16, 0.03125, 1.0, 0.03125);
+		field_909_n.Noise(field_904_s, pos.x * CHUNK_DIM, 109.0134, pos.z * CHUNK_DIM, CHUNK_DIM, 1, CHUNK_DIM, 0.03125, 1.0, 0.03125);
 		
 		double field_905_r[CHUNK_DIM * CHUNK_DIM] = {};
 		double field_903_t[CHUNK_DIM * CHUNK_DIM] = {};
-		field_909_n.Noise(field_905_r, pos.x * 16, pos.z * 16, 0.0, 16, 16, 1, 0.03125, 0.03125, 1.0);
-		field_908_o.Noise(field_903_t, pos.x * 16, pos.z * 16, 0.0, 16, 16, 1, 0.03125 * 2.0, 0.03125 * 2.0, 0.03125 * 2.0);
+		field_909_n.Noise(field_905_r, pos.x * CHUNK_DIM, pos.z * CHUNK_DIM, 0.0, CHUNK_DIM, CHUNK_DIM, 1, 0.03125, 0.03125, 1.0);
+		field_908_o.Noise(field_903_t, pos.x * CHUNK_DIM, pos.z * CHUNK_DIM, 0.0, CHUNK_DIM, CHUNK_DIM, 1, 0.03125 * 2.0, 0.03125 * 2.0, 0.03125 * 2.0);
 		
 		//Generate surface
 		double *field_904_sp = field_904_s;

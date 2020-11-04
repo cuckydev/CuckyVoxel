@@ -61,9 +61,10 @@ int main(int argc, char *argv[])
 	World::World world(render);
 	
 	//Render scene (all this code is temporary)
-	glm::dvec3 cam_pos = {8.0, 65.62, 8.0};
+	glm::dvec3 cam_pos = {8.0, 70.0, 8.0};
 	double cam_turn = glm::radians(-119.23);
 	double cam_look = glm::radians(8.297);
+	double cam_speed = 0.7;
 	glm::dvec3 cam_up = {0.0, 1.0,  0.0};
 	bool w = false, a = false, s = false, d = false;
 	
@@ -139,7 +140,6 @@ int main(int argc, char *argv[])
 			glm::cos(cam_turn) * glm::cos(cam_look),
 		};
 		
-		double cam_speed = 0.75;
 		if (w)
 			cam_pos += cam_dir * cam_speed;
 		if (s)

@@ -242,29 +242,30 @@ namespace World
 	{
 		if (!meshthread_generating)
 		{
-			if (meshthread_out.size())
+			//Create generated meshes
+			for (auto &i : meshthread_out)
 			{
-				//Create generated meshes
-				for (auto &i : meshthread_out)
+				//Make sure chunk still exists
+				if (chunk_manager->HasChunk(i.pos))
 				{
-					//Get chunk mesh
+					//Get chunk mesh object
 					auto pos = chunk_meshes.find(i.pos);
 					
 					ChunkMesh *mesh;
 					if (pos == chunk_meshes.cend())
 						mesh = &chunk_meshes.emplace(std::piecewise_construct,
-						                             std::forward_as_tuple(i.pos),
-						                             std::forward_as_tuple(render)).first->second;
+													 std::forward_as_tuple(i.pos),
+													 std::forward_as_tuple(render)).first->second;
 					else
 						mesh = &pos->second;
 					
-					//Send mesh data
+					//Send mesh data to chunk mesh object
 					if (mesh->GenerateMesh(i.mesh_data))
 						return error.Push(mesh->GetError());
 				}
 				
-				//Clear output array
-				meshthread_out.clear();
+				//Pop mesh generation
+				meshthread_out.pop_back();
 			}
 			
 			if (chunk_mesh_updates.size())
@@ -298,7 +299,7 @@ namespace World
 				chunk_mesh_updates.clear();
 				
 				//Start generating meshes
-				meshthread_generating = true;
+				meshthread_generating = (meshthread_in.size() != 0);
 			}
 		}
 		
