@@ -33,7 +33,7 @@ Name | Function
 
 You can pass your own compiler flags with `-DCMAKE_C_FLAGS` and `-DCMAKE_CXX_FLAGS`.
 
-You can then compile CSE2 with this command:
+You can then compile CuckyVoxel with this command:
 
 ```
 cmake --build build --config Release
