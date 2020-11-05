@@ -59,6 +59,11 @@ int main(int argc, char *argv[])
 	
 	//Create world
 	World::World world(render);
+	if (world.GetError())
+	{
+		std::cout << world.GetError() << std::endl;
+		return 1;
+	}
 	std::cout << world.GetSeed() << std::endl;
 	
 	//Render scene (all this code is temporary)

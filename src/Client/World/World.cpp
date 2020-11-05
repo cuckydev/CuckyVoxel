@@ -99,11 +99,10 @@ namespace World
 						Chunk *chunk = chunk_manager->GetChunk(i);
 						if (chunk != nullptr)
 						{
-							MeshThread_Out out{
+							meshthread_out.push_back({
 								i,
-								chunk->GetMeshData(),
-							};
-							meshthread_out.push_back(out);
+								chunk->GetMeshData()
+							});
 						}
 					}
 					
@@ -243,8 +242,11 @@ namespace World
 		if (!meshthread_generating)
 		{
 			//Create generated meshes
-			for (auto &i : meshthread_out)
+			while (meshthread_out.size())
 			{
+				//Get mesh data
+				MeshThread_Out &i = meshthread_out.back();
+				
 				//Make sure chunk still exists
 				if (chunk_manager->HasChunk(i.pos))
 				{

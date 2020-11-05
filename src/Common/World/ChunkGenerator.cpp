@@ -23,25 +23,25 @@ namespace World
 		static const double yf = 684.412;
 		
 		//Generate noise tables
-		double layer_2d_1[noise_xd * noise_zd] = {};
-		double layer_2d_2[noise_xd * noise_zd] = {};
-		noise_2d_1.Noise(layer_2d_1, x, z, noise_xd, noise_zd, 1.121, 1.121);
-		noise_2d_2.Noise(layer_2d_2, x, z, noise_xd, noise_zd, 200.0, 200.0);
+		double layer_2d_1[noise_xd][noise_zd] = {};
+		double layer_2d_2[noise_xd][noise_zd] = {};
+		noise_2d_1.Noise(&(layer_2d_1[0][0]), x, z, noise_xd, noise_zd, 1.121, 1.121);
+		noise_2d_2.Noise(&(layer_2d_2[0][0]), x, z, noise_xd, noise_zd, 200.0, 200.0);
 		
-		double layer_3d_lerp[noise_xd * noise_zd * noise_yd] = {};
-		double layer_3d_1[noise_xd * noise_zd * noise_yd] = {};
-		double layer_3d_2[noise_xd * noise_zd * noise_yd] = {};
-		noise_3d_lerp.Noise(layer_3d_lerp, x, y, z, noise_xd, noise_yd, noise_zd, xf / 80.0, yf / 160.0, xf / 80.0);
-		noise_3d_1.Noise(layer_3d_1, x, y, z, noise_xd, noise_yd, noise_zd, xf,        yf,         xf);
-		noise_3d_2.Noise(layer_3d_2, x, y, z, noise_xd, noise_yd, noise_zd, xf,        yf,         xf);
+		double layer_3d_lerp[noise_xd][noise_zd][noise_yd] = {};
+		double layer_3d_1[noise_xd][noise_zd][noise_yd] = {};
+		double layer_3d_2[noise_xd][noise_zd][noise_yd] = {};
+		noise_3d_lerp.Noise(&(layer_3d_lerp[0][0][0]), x, y, z, noise_xd, noise_yd, noise_zd, xf / 80.0, yf / 160.0, xf / 80.0);
+		noise_3d_1.Noise(&(layer_3d_1[0][0][0]),       x, y, z, noise_xd, noise_yd, noise_zd, xf,        yf,         xf);
+		noise_3d_2.Noise(&(layer_3d_2[0][0][0]),       x, y, z, noise_xd, noise_yd, noise_zd, xf,        yf,         xf);
 		
 		//Process noise
-		double *layer_2d_1_p = layer_2d_1;
-		double *layer_2d_2_p = layer_2d_2;
+		double *layer_2d_1_p = &(layer_2d_1[0][0]);
+		double *layer_2d_2_p = &(layer_2d_2[0][0]);
 		
-		double *layer_3d_lerp_p = layer_3d_lerp;
-		double *layer_3d_1_p = layer_3d_1;
-		double *layer_3d_2_p = layer_3d_2;
+		double *layer_3d_lerp_p = &(layer_3d_lerp[0][0][0]);
+		double *layer_3d_1_p = &(layer_3d_1[0][0][0]);
+		double *layer_3d_2_p = &(layer_3d_2[0][0][0]);
 		
 		double *temp_p = temperature;
 		double *humid_p = humidity;
@@ -139,22 +139,23 @@ namespace World
 		double noise[noise_xd][noise_zd][noise_yd] = {};
 		InitializeNoiseField(&(noise[0][0][0]), pos.x * noise_dim, 0, pos.z * noise_dim, temperature, humidity);
 		
-		for (int ny = 0; ny < noise_height; ny++)
+		//Process noise points
+		for (int nx = 0; nx < noise_dim; nx++)
 		{
 			for (int nz = 0; nz < noise_dim; nz++)
 			{
-				for (int nx = 0; nx < noise_dim; nx++)
+				for (int ny = 0; ny < noise_height; ny++)
 				{
 					//Get noise chunk points
-					double c000 = (noise[nx + 0][nz + 0][ny + 0]);
-					double c100 = (noise[nx + 1][nz + 0][ny + 0]);
-					double c010 = (noise[nx + 0][nz + 1][ny + 0]);
-					double c110 = (noise[nx + 1][nz + 1][ny + 0]);
+					const double c000 = noise[nx + 0][nz + 0][ny + 0];
+					const double c100 = noise[nx + 1][nz + 0][ny + 0];
+					const double c010 = noise[nx + 0][nz + 1][ny + 0];
+					const double c110 = noise[nx + 1][nz + 1][ny + 0];
 					
-					const double c001 = (noise[nx + 0][nz + 0][ny + 1]);
-					const double c101 = (noise[nx + 1][nz + 0][ny + 1]);
-					const double c011 = (noise[nx + 0][nz + 1][ny + 1]);
-					const double c111 = (noise[nx + 1][nz + 1][ny + 1]);
+					const double c001 = noise[nx + 0][nz + 0][ny + 1];
+					const double c101 = noise[nx + 1][nz + 0][ny + 1];
+					const double c011 = noise[nx + 0][nz + 1][ny + 1];
+					const double c111 = noise[nx + 1][nz + 1][ny + 1];
 					
 					//Process noise chunk as block data using trilinear interpolation
 					static const int zinc = CHUNK_DIM - noise_xp;

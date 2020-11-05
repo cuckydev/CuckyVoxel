@@ -90,6 +90,8 @@ namespace Backend
 				glBufferSubData(GL_ARRAY_BUFFER, 0, vbo_size * sizeof(GLfloat), data);
 			}
 			
+			delete[] data;
+			
 			//Send indices to EAB
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eab_id);
 			
@@ -121,7 +123,6 @@ namespace Backend
 			glEnableVertexAttribArray(3);
 			glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)((colour - data) * sizeof(GLfloat)));
 			
-			delete[] data;
 			return false;
 		}
 		
