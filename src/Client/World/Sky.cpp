@@ -197,7 +197,7 @@ namespace World
 					else
 						xp = datap[(y * cloud_width + (x + 1)) * 4] & 0x80; //X + 1
 					
-					if (y == (cloud_width - 1))
+					if (y == (cloud_height - 1))
 						yp = datap[(0 * cloud_width + x) * 4] & 0x80; //Y = 0
 					else
 						yp = datap[((y + 1) * cloud_width + x) * 4] & 0x80; //Y + 1
@@ -419,7 +419,7 @@ namespace World
 			{
 				if (glm::length(model[3]) <= (far + 0.707f * cloud_rad))
 				{
-					uint8_t map_val = cloud_map[((z + (cloud_height - 1)) % cloud_height) * cloud_width + ((x + (cloud_width - 1)) % cloud_width)];
+					uint8_t map_val = cloud_map[((z + cloud_height) % cloud_height) * cloud_width + ((x + cloud_width) % cloud_width)];
 					if (map_val & 0x10)
 					{
 						sky_shader->SetUniform("u_model", 1, &(model[0][0]));
