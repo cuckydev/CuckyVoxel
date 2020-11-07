@@ -10,7 +10,7 @@
 namespace World
 {
 	//World constants
-	const int chunk_range = 8;
+	const int chunk_range = 12;
 	
 	//Internal interface
 	bool World::InitWorld()
@@ -26,8 +26,8 @@ namespace World
 		else if (terrain_texture->GetError())
 			return error.Push(terrain_texture->GetError());
 		
-		//Shader for world rendering
-		Backend::Render::ShaderFile generic_shader_file(executable_dir + "Data/Shader/GenericTexture.shd");
+		//Load world shader
+		Backend::Render::ShaderFile generic_shader_file(executable_dir + "Data/Shader/GenericWorld.shd");
 		if (generic_shader_file.GetError())
 			return error.Push(generic_shader_file.GetError());
 		
@@ -44,6 +44,13 @@ namespace World
 			return error.Push("Failed to create chunk manager instance");
 		else if (chunk_manager->GetError())
 			return error.Push(chunk_manager->GetError());
+		
+		//Create sky
+		sky = new Sky(render);
+		if (sky == nullptr)
+			return error.Push("Failed to create sky instance");
+		else if (sky->GetError())
+			return error.Push(sky->GetError());
 		
 		//Start threads
 		threads_running = true;
@@ -76,8 +83,8 @@ namespace World
 					genthread_generating = false;
 				}
 				
-				//Don't check again for 10ms
-				std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				//Don't check again for 20ms
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
 			}
 		});
 		
@@ -111,17 +118,21 @@ namespace World
 					meshthread_generating = false;
 				}
 				
-				//Don't check again for 10ms
-				std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				//Don't check again for 20ms
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
 			}
 		});
 		
 		return false;
 	}
 	
-	bool World::CheckChunkRange(const ChunkPosition &chunk_pos)
+	bool World::CheckChunkRange(const ChunkPosition &cam_chunk, const ChunkPosition &chunk_pos)
 	{
-		return false;
+		auto x_diff = chunk_pos.x - cam_chunk.x;
+		auto z_diff = chunk_pos.z - cam_chunk.z;
+		if (((x_diff * x_diff) + (z_diff * z_diff)) >= (chunk_range * chunk_range))
+			return false;
+		return true;
 	}
 	
 	//Constructors and destructor
@@ -154,7 +165,8 @@ namespace World
 			delete meshthread;
 		}
 		
-		//Delete textures and shaders
+		//Delete render objects
+		delete sky;
 		delete terrain_texture;
 		delete generic_shader;
 		
@@ -193,16 +205,37 @@ namespace World
 			}
 			
 			//Queue new chunks
-			for (int x = -chunk_range; x <= chunk_range; x++)
+			static const int pos[5][2] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}, {1, 0}};
+			
+			for (int x = 0; x <= chunk_range * 3 / 2; x++)
 			{
-				for (int z = -chunk_range; z <= chunk_range; z++)
+				//Only queue up to 8 chunks
+				if (genthread_in.size() >= 8)
+					break;
+				
+				if (x == 0)
 				{
-					//Queue chunk
-					const ChunkPosition chunk_pos{cam_chunk.x + x, cam_chunk.z + z};
-					if (genthread_in.size() >= 8)
-						break;
+					//Queue chunk that's right at the camera's position
+					const ChunkPosition chunk_pos{cam_chunk.x, cam_chunk.z};
 					if (!chunk_manager->HasChunk(chunk_pos))
 						genthread_in.push_back(chunk_pos);
+				}
+				else
+				{
+					//Queue chunks around the camera's position
+					for (int i = 0; i < 4; i++)
+					{
+						for (int v = 0; v < x; v++)
+						{
+							//Queue chunk
+							const ChunkPosition chunk_pos{
+								cam_chunk.x + pos[i][0] * (x - v) + pos[i + 1][0] * v,
+								cam_chunk.z + pos[i][1] * (x - v) + pos[i + 1][1] * v,
+							};
+							if (CheckChunkRange(cam_chunk, chunk_pos) && !chunk_manager->HasChunk(chunk_pos))
+								genthread_in.push_back(chunk_pos);
+						}
+					}
 				}
 			}
 			
@@ -219,10 +252,7 @@ namespace World
 			for(auto it = chunks.begin(); it != chunks.end(); it++)
 			{
 				const ChunkPosition &chunk_pos = it->first;
-				if (chunk_pos.x < (cam_chunk.x - chunk_range) ||
-					chunk_pos.x > (cam_chunk.x + chunk_range) ||
-					chunk_pos.z < (cam_chunk.z - chunk_range) ||
-					chunk_pos.z > (cam_chunk.z + chunk_range))
+				if (!CheckChunkRange(cam_chunk, chunk_pos))
 					unload_chunks.push_back(chunk_pos);
 			}
 			
@@ -305,13 +335,23 @@ namespace World
 		}
 		
 		//Get projection and view matrices
-		glm::mat4 projection = glm::perspective(glm::radians(70.0f), (float)render->GetWidth() / (float)render->GetHeight(), 0.1f, 1024.f);
+		glm::mat4 projection = glm::perspective(glm::radians(70.0f), (float)render->GetWidth() / (float)render->GetHeight(), 0.05f, 16.0f * (chunk_range - 1));
 		glm::mat4 view = glm::lookAt({}, cam_dir, {0.0f, 1.0f, 0.0f}); //View remains stationary as the world moves around the origin
+		
+		//Render sky
+		if (sky->Render(projection, view, cam_pos))
+			return error.Push(sky->GetError());
 		
 		//Use generic shader
 		generic_shader->Bind();
 		generic_shader->SetUniform("u_projection", 1, &(projection[0][0]));
 		generic_shader->SetUniform("u_view", 1, &(view[0][0]));
+		
+		ColourSpace::RGB atmosphere_colour = sky->GetAtmosphereColour();
+		//ColourSpace::RGB void_colour = sky->GetVoidColour();
+		generic_shader->SetUniform("u_fog_colour", atmosphere_colour.r, atmosphere_colour.g, atmosphere_colour.b, 1.0f);
+		generic_shader->SetUniform("u_fog_start", 4.0f * (chunk_range - 1));
+		generic_shader->SetUniform("u_fog_end", 16.0f * (chunk_range - 1));
 		
 		//Render chunk meshes
 		terrain_texture->Bind();
@@ -321,9 +361,9 @@ namespace World
 			//Get model position
 			const ChunkPosition &chunk_pos = it->first;
 			glm::mat4 model = glm::translate(glm::mat4(1.0f), {
-				-cam_pos.x + (double)chunk_pos.x * CHUNK_DIM,
+				-cam_pos.x + (float)chunk_pos.x * CHUNK_DIM,
 				-cam_pos.y,
-				-cam_pos.z + (double)chunk_pos.z * CHUNK_DIM
+				-cam_pos.z + (float)chunk_pos.z * CHUNK_DIM
 			});
 			generic_shader->SetUniform("u_model", 1, &(model[0][0]));
 			

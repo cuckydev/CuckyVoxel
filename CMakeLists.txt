@@ -27,6 +27,8 @@ add_executable(CuckyVoxel WIN32
 	"src/Common/Util/Error.h"
 	"src/Common/Util/Random.cpp"
 	"src/Common/Util/Random.h"
+	"src/Common/Util/ColourSpace.cpp"
+	"src/Common/Util/ColourSpace.h"
 	
 	# Noise
 	"src/Common/Noise/Perlin.cpp"
@@ -48,6 +50,8 @@ add_executable(CuckyVoxel WIN32
 	"src/Common/World/ChunkGenerator.h"
 	"src/Common/World/Chunk.cpp"
 	"src/Common/World/Chunk.h"
+	"src/Common/World/Entity.cpp"
+	"src/Common/World/Entity.h"
 )
 
 target_include_directories(CuckyVoxel PRIVATE "src")
@@ -153,6 +157,8 @@ if(COMPILE_CLIENT)
 		"src/Client/TextureData.h"
 		"src/Client/World/World.cpp"
 		"src/Client/World/World.h"
+		"src/Client/World/Sky.cpp"
+		"src/Client/World/Sky.h"
 		"src/Client/World/ChunkMesh.cpp"
 		"src/Client/World/ChunkMesh.h"
 		

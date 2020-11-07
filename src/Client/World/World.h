@@ -9,6 +9,7 @@
 #include "Common/World/WorldDef.h"
 #include "Common/World/ChunkManager.h"
 #include "ChunkMesh.h"
+#include "Sky.h"
 
 #include "../Backend/Render.h"
 
@@ -45,20 +46,6 @@ namespace World
 			//Threads
 			std::atomic<bool> threads_running = false;
 			
-			//World generation
-			std::atomic<bool> genthread_generating = false;
-			std::thread *genthread = nullptr;
-			
-			std::vector<ChunkPosition> genthread_in;
-			std::vector<GenThread_Out> genthread_out;
-			
-			//World generation
-			std::atomic<bool> meshthread_generating = false;
-			std::thread *meshthread = nullptr;
-			
-			std::vector<ChunkPosition> meshthread_in;
-			std::vector<MeshThread_Out> meshthread_out;
-			
 			//Chunk state
 			ChunkManager *chunk_manager = nullptr;
 			
@@ -71,11 +58,27 @@ namespace World
 			Backend::Render::Texture *terrain_texture = nullptr;
 			Backend::Render::Shader *generic_shader = nullptr;
 			
+			Sky *sky = nullptr;
+			
+			//World generation
+			std::atomic<bool> genthread_generating = false;
+			std::thread *genthread = nullptr;
+			
+			std::vector<ChunkPosition> genthread_in;
+			std::vector<GenThread_Out> genthread_out;
+			
+			//Mesh generation
+			std::atomic<bool> meshthread_generating = false;
+			std::thread *meshthread = nullptr;
+			
+			std::vector<ChunkPosition> meshthread_in;
+			std::vector<MeshThread_Out> meshthread_out;
+			
 		private:
 			//Internal interface
 			bool InitWorld();
 			
-			bool CheckChunkRange(const ChunkPosition &chunk_pos);
+			bool CheckChunkRange(const ChunkPosition &cam_chunk, const ChunkPosition &chunk_pos);
 			
 		public:
 			//Constructors and destructor

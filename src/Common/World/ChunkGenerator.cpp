@@ -107,13 +107,13 @@ namespace World
 						height_mod *= 4.0; //Flatten terrain below water level
 					
 					//Apply 3D noise layers to final value
-					const double value_3d_1 = ((*layer_3d_1_p++) / 512.0);
-					const double value_3d_2 = ((*layer_3d_2_p++) / 512.0);
+					const double value_3d_1 = (*layer_3d_1_p++) / 512.0;
+					const double value_3d_2 = (*layer_3d_2_p++) / 512.0;
 					const double value_3d_lerp = ((*layer_3d_lerp_p++) / 10.0 + 1.0) / 2.0;
 					
-					if (value_3d_lerp < 0.0D)
+					if (value_3d_lerp < 0.0)
 						final_value = value_3d_1;
-					else if(value_3d_lerp > 1.0D)
+					else if(value_3d_lerp > 1.0)
 						final_value = value_3d_2;
 					else
 						final_value = value_3d_1 + (value_3d_2 - value_3d_1) * value_3d_lerp;

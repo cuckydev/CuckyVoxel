@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 	glm::dvec3 cam_pos = {0.0, 70.0, 0.0};
 	double cam_turn = glm::radians(-119.23);
 	double cam_look = glm::radians(8.297);
-	double cam_speed = 0.7;
+	double cam_speed = 1.0;
 	glm::dvec3 cam_up = {0.0, 1.0,  0.0};
 	bool w = false, a = false, s = false, d = false;
 	
@@ -161,10 +161,6 @@ int main(int argc, char *argv[])
 			std::cout << world.GetError() << std::endl;
 			return 1;
 		}
-		
-		//Render sky
-		render->ClearColour(0.7529412f, 0.8470588f, 1.0f);
-		render->ClearDepth(1.0f);
 		
 		//Render scene
 		if (world.Render(cam_pos, cam_dir))

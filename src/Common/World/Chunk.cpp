@@ -78,7 +78,7 @@ namespace World
 		float vertices[12];
 	};
 	
-	inline void MakeFace(ChunkMeshData &data, int &ind_i, const ChunkMeshFace &mesh_face, const BlockId block_id, const BlockFace block_face, const BlockPosition &pos)
+	inline void MakeFace(ChunkMeshData &data, unsigned int &ind_i, const ChunkMeshFace &mesh_face, const BlockId block_id, const BlockFace block_face, const BlockPosition &pos)
 	{
 		//Get vertices
 		const float *vertex = mesh_face.vertices;
@@ -101,12 +101,7 @@ namespace World
 		}
 		
 		//Push indices
-		data.ind.push_back(ind_i);
-		data.ind.push_back(ind_i + 1);
-		data.ind.push_back(ind_i + 2);
-		data.ind.push_back(ind_i + 2);
-		data.ind.push_back(ind_i + 3);
-		data.ind.push_back(ind_i);
+		data.ind.insert(data.ind.end(), {ind_i, ind_i + 1, ind_i + 2, ind_i + 2, ind_i + 3, ind_i});
 		ind_i += 4;
 	}
 	
@@ -140,7 +135,7 @@ namespace World
 		
 		//Mesh data
 		ChunkMeshData data;
-		int ind_i = 0;
+		unsigned int ind_i = 0;
 		
 		//Generate mesh data
 		Block *blockp = &(mesh_blocks[0][0][0]);
