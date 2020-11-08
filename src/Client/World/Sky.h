@@ -30,14 +30,19 @@ namespace World
 			Backend::Render::Render *render;
 			
 			Backend::Render::Shader *sky_shader = nullptr;
+			Backend::Render::Shader *generic_texture_shader = nullptr;
+			
 			Backend::Render::Mesh *ceiling_mesh = nullptr;
-			//Backend::Render::Mesh *void_mesh = nullptr;
+			Backend::Render::Mesh *body_mesh = nullptr;
+			
+			Backend::Render::Texture *sun_texture = nullptr;
+			Backend::Render::Texture *moon_texture = nullptr;
 			
 			int cloud_width;
 			int cloud_height;
 			uint8_t *cloud_map = nullptr;
 			
-			float cloud_x;
+			float cloud_x = 0.0f;
 			Backend::Render::Mesh *cloud_mesh[16] = {};
 			
 		public:

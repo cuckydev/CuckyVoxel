@@ -120,12 +120,12 @@ namespace World
 	ChunkMeshData Chunk::GetMeshData()
 	{
 		//Faces
-		const ChunkMeshFace front_face =  {{1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1}};
-		const ChunkMeshFace right_face =  {{1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0}};
-		const ChunkMeshFace back_face =   {{0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0}};
-		const ChunkMeshFace left_face =   {{0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1}};
-		const ChunkMeshFace top_face =    {{1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1}};
-		const ChunkMeshFace bottom_face = {{0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1}};
+		static const ChunkMeshFace front_face =  {{1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1}};
+		static const ChunkMeshFace right_face =  {{1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0}};
+		static const ChunkMeshFace back_face =   {{0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0}};
+		static const ChunkMeshFace left_face =   {{0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1}};
+		static const ChunkMeshFace top_face =    {{1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1}};
+		static const ChunkMeshFace bottom_face = {{0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1}};
 		
 		//Get neighbouring chunks
 		Chunk *front_chunk = parent_chunk_manager.GetChunk({pos.x + 0, pos.z + 1});

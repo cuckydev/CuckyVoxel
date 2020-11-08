@@ -24,9 +24,6 @@ int main(int argc, char *argv[])
 		executable_dir = "./";
 	}
 	
-	if (argc >= 2)
-		World::chunk_range = std::stoi(argv[1]);
-	
 	//Initialize backend
 	static const Backend::Config config = {
 		{}, //core_config

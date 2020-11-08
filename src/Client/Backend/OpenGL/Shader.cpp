@@ -1,7 +1,5 @@
 #include "Shader.h"
 
-#include <iostream>
-
 namespace Backend
 {
 	namespace Render

@@ -10,7 +10,7 @@
 namespace World
 {
 	//World constants
-	int chunk_range = 12;
+	static const int chunk_range = 12;
 	
 	//Internal interface
 	bool World::InitWorld()

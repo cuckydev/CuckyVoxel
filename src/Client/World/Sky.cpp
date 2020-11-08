@@ -12,6 +12,10 @@ namespace World
 	//Sky constants
 	static const float sky_height = 16.0f;
 	
+	static const float sun_rad = 30.0f;
+	static const float moon_rad = 20.0f;
+	static const float body_dis = 100.0f;
+	
 	static const float cloud_dim = 12.0f;
 	static const float cloud_depth = 4.0f;
 	
@@ -64,11 +68,27 @@ namespace World
 			return;
 		}
 		
-		//Create sky meshes
-		static const std::vector<unsigned int> mesh_inds = {
-			0, 1, 2, 2, 3, 0
-		};
+		//Load generic texture shader
+		Backend::Render::ShaderFile generic_texture_shader_file(executable_dir + "Data/Shader/GenericTexture.shd");
+		if (generic_texture_shader_file.GetError())
+		{
+			error.Push(generic_texture_shader_file.GetError());
+			return;
+		}
 		
+		generic_texture_shader = render->NewShader(generic_texture_shader_file);
+		if (generic_texture_shader == nullptr)
+		{
+			error.Push("Failed to create generic texture instance");
+			return;
+		}
+		else if (generic_texture_shader->GetError())
+		{
+			error.Push(generic_texture_shader->GetError());
+			return;
+		}
+		
+		//Create sky meshes
 		static const std::vector<Backend::Render::Vertex> ceil_verts = {
 			{
 				{1.0f, sky_height, 1.0f},
@@ -96,7 +116,11 @@ namespace World
 			},
 		};
 		
-		ceiling_mesh = render->NewMesh(ceil_verts, mesh_inds);
+		static const std::vector<unsigned int> ceil_inds = {
+			0, 1, 2, 2, 3, 0
+		};
+		
+		ceiling_mesh = render->NewMesh(ceil_verts, ceil_inds);
 		if (ceiling_mesh == nullptr)
 		{
 			error.Push("Failed to create ceiling mesh instance");
@@ -105,6 +129,89 @@ namespace World
 		else if (ceiling_mesh->GetError())
 		{
 			error.Push(ceiling_mesh->GetError());
+			return;
+		}
+		
+		static const std::vector<Backend::Render::Vertex> body_verts = {
+			{
+				{1.0f, body_dis, 1.0f},
+				{0.0f, 0.0f},
+				{0.0f, -1.0f, 0.0f},
+				{1.0f, 1.0f, 1.0f, 1.0f},
+			},
+			{
+				{-1.0f, body_dis, 1.0f},
+				{1.0f, 0.0f},
+				{0.0f, -1.0f, 0.0f},
+				{1.0f, 1.0f, 1.0f, 1.0f},
+			},
+			{
+				{-1.0f, body_dis, -1.0f},
+				{1.0f, 1.0f},
+				{0.0f, -1.0f, 0.0f},
+				{1.0f, 1.0f, 1.0f, 1.0f},
+			},
+			{
+				{1.0f, body_dis, -1.0f},
+				{0.0f, 1.0f},
+				{0.0f, -1.0f, 0.0f},
+				{1.0f, 1.0f, 1.0f, 1.0f},
+			},
+		};
+		
+		static const std::vector<unsigned int> body_inds = {
+			0, 1, 2, 2, 3, 0
+		};
+		
+		body_mesh = render->NewMesh(body_verts, body_inds);
+		if (body_mesh == nullptr)
+		{
+			error.Push("Failed to create body mesh instance");
+			return;
+		}
+		else if (body_mesh->GetError())
+		{
+			error.Push(body_mesh->GetError());
+			return;
+		}
+		
+		//Load sun texture
+		TextureData sun_texture_data(executable_dir + "Data/World/Sun.png");
+		if (sun_texture_data.GetError())
+		{
+			error.Push(sun_texture_data.GetError());
+			return;
+		}
+		
+		sun_texture = render->NewTexture(sun_texture_data.data, sun_texture_data.width, sun_texture_data.height);
+		if (sun_texture == nullptr)
+		{
+			error.Push("Failed to create sun texture instance");
+			return;
+		}
+		else if (sun_texture->GetError())
+		{
+			error.Push(sun_texture->GetError());
+			return;
+		}
+		
+		//Load moon texture
+		TextureData moon_texture_data(executable_dir + "Data/World/Moon.png");
+		if (moon_texture_data.GetError())
+		{
+			error.Push(moon_texture_data.GetError());
+			return;
+		}
+		
+		moon_texture = render->NewTexture(moon_texture_data.data, moon_texture_data.width, moon_texture_data.height);
+		if (moon_texture == nullptr)
+		{
+			error.Push("Failed to create moon texture instance");
+			return;
+		}
+		else if (moon_texture->GetError())
+		{
+			error.Push(moon_texture->GetError());
 			return;
 		}
 		
@@ -130,7 +237,7 @@ namespace World
 		uint8_t *cloud_map_p = cloud_map;
 		for (int y = 0; y < cloud_height; y++)
 		{
-			for (int x = 0; x < cloud_height; x++)
+			for (int x = 0; x < cloud_width; x++)
 			{
 				//Check if this pixel is set
 				if (datap[(y * cloud_width + x) * 4] & 0x80)
@@ -174,12 +281,12 @@ namespace World
 		}
 		
 		//Cloud faces
-		const CloudMeshFace cloud_front_face =  {{1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1}, 0.9f};
-		const CloudMeshFace cloud_right_face =  {{1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0}, 0.95f};
-		const CloudMeshFace cloud_back_face =   {{0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0}, 0.9f};
-		const CloudMeshFace cloud_left_face =   {{0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1}, 0.95f};
-		const CloudMeshFace cloud_top_face =    {{1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1}, 1.0f};
-		const CloudMeshFace cloud_bottom_face = {{0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1}, 0.85f};
+		static const CloudMeshFace cloud_front_face =  {{1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1}, 0.9f};
+		static const CloudMeshFace cloud_right_face =  {{1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0}, 0.95f};
+		static const CloudMeshFace cloud_back_face =   {{0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0}, 0.9f};
+		static const CloudMeshFace cloud_left_face =   {{0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1}, 0.95f};
+		static const CloudMeshFace cloud_top_face =    {{1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1}, 1.0f};
+		static const CloudMeshFace cloud_bottom_face = {{0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1}, 0.85f};
 		
 		//Generate cloud meshes
 		for (int i = 0; i < 16; i++)
@@ -230,8 +337,13 @@ namespace World
 		for (int i = 0; i < 16; i++)
 			delete cloud_mesh[i];
 		
-		//delete void_mesh;
+		delete moon_texture;
+		delete sun_texture;
+		
+		delete body_mesh;
 		delete ceiling_mesh;
+		
+		delete generic_texture_shader;
 		delete sky_shader;
 	}
 	
@@ -339,7 +451,28 @@ namespace World
 		sky_shader->SetUniform("u_col", sky_colour.r, sky_colour.g, sky_colour.b, 1.0f);
 		ceiling_mesh->Draw();
 		
-		//Clear depth so the rest of the scene draws on top of the sky
+		//Clear depth before rendering celestial bodies
+		render->ClearDepth(1.0f);
+		
+		generic_texture_shader->Bind();
+		generic_texture_shader->SetUniform("u_projection", 1, &(projection[0][0]));
+		generic_texture_shader->SetUniform("u_view", 1, &(view[0][0]));
+		
+		//Sun
+		model = glm::scale(glm::rotate(glm::mat4(1.0f), sky_state.celestial_angle * 6.283185f, {1.0f, 0.0f, 0.0f}), {sun_rad, 1.0f, sun_rad});
+		generic_texture_shader->SetUniform("u_model", 1, &(model[0][0]));
+		
+		sun_texture->Bind();
+		body_mesh->Draw();
+		
+		//Moon
+		model = glm::scale(glm::rotate(glm::mat4(1.0f), (sky_state.celestial_angle + 0.5f) * 6.283185f, {1.0f, 0.0f, 0.0f}), {moon_rad, 1.0f, moon_rad});
+		generic_texture_shader->SetUniform("u_model", 1, &(model[0][0]));
+		
+		moon_texture->Bind();
+		body_mesh->Draw();
+		
+		//Clear depth before rendering clouds
 		render->ClearDepth(1.0f);
 		
 		//Get cloud positioning
@@ -355,12 +488,14 @@ namespace World
 		int cloud_rad = std::ceil((far + cloud_dim * 0.707f) / cloud_dim);
 		
 		//Draw clouds
+		sky_shader->Bind();
 		sky_shader->SetUniform("u_col", cloud_colour.r, cloud_colour.g, cloud_colour.b, 0.65f);
+		sky_shader->SetUniform("u_fog_start", std::max((float)(cloud_y - cam_pos.y), 0.0f));
 		sky_shader->SetUniform("u_fog_colour",
 			atmosphere_colour.r + (sky_colour.r - atmosphere_colour.r) * cloud_collerp,
 			atmosphere_colour.g + (sky_colour.g - atmosphere_colour.g) * cloud_collerp,
 			atmosphere_colour.b + (sky_colour.b - atmosphere_colour.b) * cloud_collerp,
-			1.0f);
+			0.0f);
 		
 		static const int pos[5][2] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}, {1, 0}};
 		
@@ -368,7 +503,9 @@ namespace World
 		{
 			if (x == 0)
 			{
-				uint8_t map_val = cloud_map[((cloud_cam_z + cloud_height) % cloud_height) * cloud_width + ((cloud_cam_x + cloud_width) % cloud_width)];
+				int mx = (cloud_cam_x + cloud_width) % cloud_width;
+				int mz = (cloud_cam_z + cloud_height) % cloud_height;
+				uint8_t map_val = cloud_map[mz * cloud_width + mx];
 				if (map_val & 0x10)
 				{
 					model = glm::translate(glm::mat4(1.0f), {
@@ -389,15 +526,17 @@ namespace World
 				{
 					for (int v = 0; v < x; v++)
 					{
-						int cx = cloud_cam_x + pos[i][0] * (x - v) + pos[i + 1][0] * v;
-						int cz = cloud_cam_z + pos[i][1] * (x - v) + pos[i + 1][1] * v;
-						uint8_t map_val = cloud_map[((cz + cloud_height) % cloud_height) * cloud_width + ((cx + cloud_width) % cloud_width)];
+						int wx = cloud_cam_x + pos[i][0] * (x - v) + pos[i + 1][0] * v;
+						int wz = cloud_cam_z + pos[i][1] * (x - v) + pos[i + 1][1] * v;
+						int mx = (wx + cloud_width) % cloud_width;
+						int mz = (wz + cloud_height) % cloud_height;
+						uint8_t map_val = cloud_map[mz * cloud_width + mx];
 						if (map_val & 0x10)
 						{
 							model = glm::translate(glm::mat4(1.0f), {
-								-cam_pos.x + (float)cx * cloud_dim + cloud_x,
+								-cam_pos.x + (float)wx * cloud_dim + cloud_x,
 								-cam_pos.y + cloud_y,
-								-cam_pos.z + (float)cz * cloud_dim
+								-cam_pos.z + (float)wz * cloud_dim
 							});
 							if (glm::length(model[3]) <= (far + 0.707f * cloud_rad))
 							{
