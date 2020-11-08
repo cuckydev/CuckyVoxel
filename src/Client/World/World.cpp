@@ -10,7 +10,7 @@
 namespace World
 {
 	//World constants
-	const int chunk_range = 12;
+	int chunk_range = 12;
 	
 	//Internal interface
 	bool World::InitWorld()
@@ -348,9 +348,8 @@ namespace World
 		generic_shader->SetUniform("u_view", 1, &(view[0][0]));
 		
 		ColourSpace::RGB atmosphere_colour = sky->GetAtmosphereColour();
-		//ColourSpace::RGB void_colour = sky->GetVoidColour();
 		generic_shader->SetUniform("u_fog_colour", atmosphere_colour.r, atmosphere_colour.g, atmosphere_colour.b, 1.0f);
-		generic_shader->SetUniform("u_fog_start", 4.0f * (chunk_range - 1));
+		generic_shader->SetUniform("u_fog_start", 8.0f * (chunk_range - 1));
 		generic_shader->SetUniform("u_fog_end", 16.0f * (chunk_range - 1));
 		
 		//Render chunk meshes

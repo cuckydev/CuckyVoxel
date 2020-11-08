@@ -19,6 +19,8 @@
 
 namespace World
 {
+	extern int chunk_range;
+	
 	//Generation thread output
 	struct GenThread_Out
 	{

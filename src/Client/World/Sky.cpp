@@ -10,7 +10,6 @@
 namespace World
 {
 	//Sky constants
-	static const float sky_rad = 256.0f;
 	static const float sky_height = 16.0f;
 	
 	static const float cloud_dim = 12.0f;
@@ -72,59 +71,30 @@ namespace World
 		
 		static const std::vector<Backend::Render::Vertex> ceil_verts = {
 			{
-				{sky_rad, sky_height, sky_rad},
+				{1.0f, sky_height, 1.0f},
 				{0.0f, 0.0f},
 				{0.0f, -1.0f, 0.0f},
 				{1.0f, 1.0f, 1.0f, 1.0f},
 			},
 			{
-				{-sky_rad, sky_height, sky_rad},
+				{-1.0f, sky_height, 1.0f},
 				{0.0f, 0.0f},
 				{0.0f, -1.0f, 0.0f},
 				{1.0f, 1.0f, 1.0f, 1.0f},
 			},
 			{
-				{-sky_rad, sky_height, -sky_rad},
+				{-1.0f, sky_height, -1.0f},
 				{0.0f, 0.0f},
 				{0.0f, -1.0f, 0.0f},
 				{1.0f, 1.0f, 1.0f, 1.0f},
 			},
 			{
-				{sky_rad, sky_height, -sky_rad},
+				{1.0f, sky_height, -1.0f},
 				{0.0f, 0.0f},
 				{0.0f, -1.0f, 0.0f},
 				{1.0f, 1.0f, 1.0f, 1.0f},
 			},
 		};
-		
-		/*
-		static const std::vector<Backend::Render::Vertex> void_verts = {
-			{
-				{sky_rad, -sky_height, -sky_rad},
-				{0.0f, 0.0f},
-				{0.0f, 1.0f, 0.0f},
-				{1.0f, 1.0f, 1.0f, 1.0f},
-			},
-			{
-				{-sky_rad, -sky_height, -sky_rad},
-				{0.0f, 0.0f},
-				{0.0f, 1.0f, 0.0f},
-				{1.0f, 1.0f, 1.0f, 1.0f},
-			},
-			{
-				{-sky_rad, -sky_height, sky_rad},
-				{0.0f, 0.0f},
-				{0.0f, 1.0f, 0.0f},
-				{1.0f, 1.0f, 1.0f, 1.0f},
-			},
-			{
-				{sky_rad, -sky_height, sky_rad},
-				{0.0f, 0.0f},
-				{0.0f, 1.0f, 0.0f},
-				{1.0f, 1.0f, 1.0f, 1.0f},
-			},
-		};
-		*/
 		
 		ceiling_mesh = render->NewMesh(ceil_verts, mesh_inds);
 		if (ceiling_mesh == nullptr)
@@ -137,20 +107,6 @@ namespace World
 			error.Push(ceiling_mesh->GetError());
 			return;
 		}
-		
-		/*
-		void_mesh = render->NewMesh(void_verts, mesh_inds);
-		if (void_mesh == nullptr)
-		{
-			error.Push("Failed to create void mesh instance");
-			return;
-		}
-		else if (void_mesh->GetError())
-		{
-			error.Push(void_mesh->GetError());
-			return;
-		}
-		*/
 		
 		//Load clouds texture
 		TextureData clouds_texture_data(executable_dir + "Data/World/Clouds.png");
@@ -336,6 +292,9 @@ namespace World
 	
 	bool Sky::Render(glm::mat4 projection, glm::mat4 view, glm::dvec3 cam_pos)
 	{
+		//Model matrix
+		glm::mat4 model;
+		
 		//Get sky state
 		time_ticks += 20.0f / 60.0f;
 		if (time_ticks >= 24000.0f)
@@ -365,9 +324,6 @@ namespace World
 		sky_shader->SetUniform("u_projection", 1, &(projection[0][0]));
 		sky_shader->SetUniform("u_view", 1, &(view[0][0]));
 		
-		glm::mat4 model(1.0f);
-		sky_shader->SetUniform("u_model", 1, &(model[0][0]));
-		
 		sky_shader->SetUniform("u_fog_colour", atmosphere_colour.r, atmosphere_colour.g, atmosphere_colour.b, 1.0f);
 		sky_shader->SetUniform("u_fog_start", 0.0f);
 		sky_shader->SetUniform("u_fog_end", far * 0.8f);
@@ -377,12 +333,11 @@ namespace World
 		render->ClearDepth(1.0f);
 		
 		//Draw ceiling plane
+		model = glm::scale(glm::mat4(1.0f), {far, 1.0f, far});
+		sky_shader->SetUniform("u_model", 1, &(model[0][0]));
+		
 		sky_shader->SetUniform("u_col", sky_colour.r, sky_colour.g, sky_colour.b, 1.0f);
 		ceiling_mesh->Draw();
-		
-		//Draw void plane
-		//sky_shader->SetUniform("u_col", sky_colour.r * 0.2f + 0.04f, sky_colour.g * 0.2f + 0.04f, sky_colour.b * 0.6f + 0.1f, 1.0f);
-		//void_mesh->Draw();
 		
 		//Clear depth so the rest of the scene draws on top of the sky
 		render->ClearDepth(1.0f);
@@ -399,12 +354,6 @@ namespace World
 		int cloud_cam_z = std::floor(cam_pos.z / cloud_dim);
 		int cloud_rad = std::ceil((far + cloud_dim * 0.707f) / cloud_dim);
 		
-		model = glm::translate(glm::mat4(1.0f), {
-			-(cam_pos.x - cloud_x) + (float)(cloud_cam_x - cloud_rad) * cloud_dim,
-			-cam_pos.y + cloud_y,
-			-cam_pos.z + (float)(cloud_cam_z - cloud_rad) * cloud_dim
-		});
-		
 		//Draw clouds
 		sky_shader->SetUniform("u_col", cloud_colour.r, cloud_colour.g, cloud_colour.b, 0.65f);
 		sky_shader->SetUniform("u_fog_colour",
@@ -413,23 +362,52 @@ namespace World
 			atmosphere_colour.b + (sky_colour.b - atmosphere_colour.b) * cloud_collerp,
 			1.0f);
 		
-		for (int z = cloud_cam_z - cloud_rad; z <= cloud_cam_z + cloud_rad; z++)
+		static const int pos[5][2] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}, {1, 0}};
+		
+		for (int x = 0; x <= cloud_rad * 3 / 2; x++)
 		{
-			for (int x = cloud_cam_x - cloud_rad; x <= cloud_cam_x + cloud_rad; x++)
+			if (x == 0)
 			{
-				if (glm::length(model[3]) <= (far + 0.707f * cloud_rad))
+				uint8_t map_val = cloud_map[((cloud_cam_z + cloud_height) % cloud_height) * cloud_width + ((cloud_cam_x + cloud_width) % cloud_width)];
+				if (map_val & 0x10)
 				{
-					uint8_t map_val = cloud_map[((z + cloud_height) % cloud_height) * cloud_width + ((x + cloud_width) % cloud_width)];
-					if (map_val & 0x10)
+					model = glm::translate(glm::mat4(1.0f), {
+						-cam_pos.x + (float)cloud_cam_x * cloud_dim + cloud_x,
+						-cam_pos.y + cloud_y,
+						-cam_pos.z + (float)cloud_cam_z * cloud_dim
+					});
+					if (glm::length(model[3]) <= (far + 0.707f * cloud_rad))
 					{
 						sky_shader->SetUniform("u_model", 1, &(model[0][0]));
 						cloud_mesh[map_val & 0xF]->Draw();
 					}
 				}
-				model[3][0] += cloud_dim;
 			}
-			model[3][0] -= cloud_dim * (cloud_rad + 1 + cloud_rad);
-			model[3][2] += cloud_dim;
+			else
+			{
+				for (int i = 0; i < 4; i++)
+				{
+					for (int v = 0; v < x; v++)
+					{
+						int cx = cloud_cam_x + pos[i][0] * (x - v) + pos[i + 1][0] * v;
+						int cz = cloud_cam_z + pos[i][1] * (x - v) + pos[i + 1][1] * v;
+						uint8_t map_val = cloud_map[((cz + cloud_height) % cloud_height) * cloud_width + ((cx + cloud_width) % cloud_width)];
+						if (map_val & 0x10)
+						{
+							model = glm::translate(glm::mat4(1.0f), {
+								-cam_pos.x + (float)cx * cloud_dim + cloud_x,
+								-cam_pos.y + cloud_y,
+								-cam_pos.z + (float)cz * cloud_dim
+							});
+							if (glm::length(model[3]) <= (far + 0.707f * cloud_rad))
+							{
+								sky_shader->SetUniform("u_model", 1, &(model[0][0]));
+								cloud_mesh[map_val & 0xF]->Draw();
+							}
+						}
+					}
+				}
+			}
 		}
 		
 		return false;

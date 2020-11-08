@@ -228,8 +228,8 @@ namespace World
 		double gravel_map[CHUNK_DIM * CHUNK_DIM] = {};
 		double sand_map[CHUNK_DIM * CHUNK_DIM] = {};
 		double depth_map[CHUNK_DIM * CHUNK_DIM] = {};
-		noise_surf_map.Noise(gravel_map, pos.x * CHUNK_DIM, 109.0134, pos.z * CHUNK_DIM, CHUNK_DIM, 1, CHUNK_DIM, 0.03125, 1.0, 0.03125);
-		noise_surf_map.Noise(sand_map, pos.x * CHUNK_DIM, pos.z * CHUNK_DIM, CHUNK_DIM, CHUNK_DIM, 0.03125, 0.03125);
+		noise_surf_map.Noise(gravel_map, pos.x * CHUNK_DIM, 128.0, pos.z * CHUNK_DIM, CHUNK_DIM, 1, CHUNK_DIM, 0.03125, 1.0, 0.03125);
+		noise_surf_map.Noise(sand_map, 5825.0 + pos.x * CHUNK_DIM, 64.0, 8542.0 + pos.z * CHUNK_DIM, CHUNK_DIM, 1, CHUNK_DIM, 0.0325, 1.0, 0.0325);
 		noise_surf_depth.Noise(depth_map, pos.x * CHUNK_DIM, pos.z * CHUNK_DIM, CHUNK_DIM, CHUNK_DIM, 0.03125 * 2.0, 0.03125 * 2.0);
 		
 		//Generate surface
@@ -249,7 +249,7 @@ namespace World
 				BlockId filler_block = BlockId_Dirt;
 				
 				bool surf_sand = (*sand_map_p++ + random.NextDouble() * 0.2) > 0.0;
-				bool surf_gravel = (*gravel_map_p++ + random.NextDouble() * 0.2) > 3.0;
+				bool surf_gravel = (*gravel_map_p++ + random.NextDouble() * 0.4) > 3.5;
 				int surf_depth = (int)(*depth_map_p++ / 3.0 + 3.0 + random.NextDouble() * 0.25);
 				
 				for (int y = (CHUNK_HEIGHT - 1); y >= 0; y--)

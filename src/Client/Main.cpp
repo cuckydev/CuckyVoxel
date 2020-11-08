@@ -24,6 +24,9 @@ int main(int argc, char *argv[])
 		executable_dir = "./";
 	}
 	
+	if (argc >= 2)
+		World::chunk_range = std::stoi(argv[1]);
+	
 	//Initialize backend
 	static const Backend::Config config = {
 		{}, //core_config
@@ -67,9 +70,9 @@ int main(int argc, char *argv[])
 	std::cout << world.GetSeed() << std::endl;
 	
 	//Render scene (all this code is temporary)
-	glm::dvec3 cam_pos = {0.0, 70.0, 0.0};
-	double cam_turn = glm::radians(-119.23);
-	double cam_look = glm::radians(8.297);
+	glm::dvec3 cam_pos = {8.0, 70.0, 8.0};
+	double cam_turn = glm::radians(0.0);
+	double cam_look = glm::radians(0.0);
 	double cam_speed = 1.0;
 	glm::dvec3 cam_up = {0.0, 1.0,  0.0};
 	bool w = false, a = false, s = false, d = false;
