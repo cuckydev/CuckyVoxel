@@ -380,11 +380,33 @@ namespace World
 	
 	ColourSpace::RGB Sky::GetAtmosphereColour()
 	{
+		//Get base colours
 		ColourSpace::RGB sky_colour = GetSkyColour();
 		ColourSpace::RGB fog_colour = GetFogColour();
 		float light = GetLight(sky_state.celestial_angle);
 		float blend_factor = 0.75f + (sky_state.blend_factor - 0.75f) * light;
 		
+		/*
+		//Blend for sunrise and sunset
+		float glow_fac = 0.0f;
+		if (sky_state.celestial_angle < 0.5f)
+			glow_fac = std::clamp(1.0f - std::abs(sky_state.celestial_angle - 0.25f) / 0.05f, 0.0f, 1.0f);
+		else
+			glow_fac = std::clamp(1.0f - std::abs(sky_state.celestial_angle - 0.75f) / 0.05f, 0.0f, 1.0f);
+		
+		static const ColourSpace::RGB sunset_col = {
+			1.5f,
+			0.35f,
+			0.15f,
+		};
+		
+		blend_factor *= 0.1f + glow_fac * 0.9f;
+		fog_colour.r = fog_colour.r + (sunset_col.r - fog_colour.r) * glow_fac;
+		fog_colour.g = fog_colour.g + (sunset_col.g - fog_colour.g) * glow_fac;
+		fog_colour.b = fog_colour.b + (sunset_col.b - fog_colour.b) * glow_fac;
+		*/
+		
+		//Return final blend colour
 		return {
 			fog_colour.r + (sky_colour.r - fog_colour.r) * blend_factor,
 			fog_colour.g + (sky_colour.g - fog_colour.g) * blend_factor,
@@ -490,7 +512,7 @@ namespace World
 		//Draw clouds
 		sky_shader->Bind();
 		sky_shader->SetUniform("u_col", cloud_colour.r, cloud_colour.g, cloud_colour.b, 0.65f);
-		sky_shader->SetUniform("u_fog_start", std::max((float)(cloud_y - cam_pos.y), 0.0f));
+		sky_shader->SetUniform("u_fog_start", std::clamp((float)(cloud_y - cam_pos.y), 0.0f, far * 0.5f));
 		sky_shader->SetUniform("u_fog_colour",
 			atmosphere_colour.r + (sky_colour.r - atmosphere_colour.r) * cloud_collerp,
 			atmosphere_colour.g + (sky_colour.g - atmosphere_colour.g) * cloud_collerp,
@@ -503,8 +525,8 @@ namespace World
 		{
 			if (x == 0)
 			{
-				int mx = (cloud_cam_x + cloud_width) % cloud_width;
-				int mz = (cloud_cam_z + cloud_height) % cloud_height;
+				int mx = (cloud_width + ((cloud_cam_x + cloud_width) % cloud_width)) % cloud_width;
+				int mz = (cloud_height + ((cloud_cam_z + cloud_height) % cloud_height)) % cloud_height;
 				uint8_t map_val = cloud_map[mz * cloud_width + mx];
 				if (map_val & 0x10)
 				{
@@ -528,8 +550,8 @@ namespace World
 					{
 						int wx = cloud_cam_x + pos[i][0] * (x - v) + pos[i + 1][0] * v;
 						int wz = cloud_cam_z + pos[i][1] * (x - v) + pos[i + 1][1] * v;
-						int mx = (wx + cloud_width) % cloud_width;
-						int mz = (wz + cloud_height) % cloud_height;
+						int mx = (cloud_width + ((wx + cloud_width) % cloud_width)) % cloud_width;
+						int mz = (cloud_height + ((wz + cloud_height) % cloud_height)) % cloud_height;
 						uint8_t map_val = cloud_map[mz * cloud_width + mx];
 						if (map_val & 0x10)
 						{
